@@ -1,0 +1,26 @@
+# See https://golang.org/cmd/go/#hdr-Remote_import_paths to learn more about
+# how remote import paths work.
+
+# Every package you want importbounce to handle should have a table in your
+# TOML config, like the examples below.
+
+[[packages]]
+# The import path prefix. This must match a full segment of the requested
+# import path for this config to apply. For example, this config would not
+# match "example.com/gitpackagexyz".
+prefix = "example.com/gitpackage"
+
+# The combination of "vcs" and "repo-root" to use in the "go-import" meta tag,
+# as described in the Go documentation above.
+import = "git https://git.example.com/example/gitpackage"
+
+# The site to which web visitors should be redirected. This can be a godoc.org
+# link, a GitHub link, a link to your website, etc.
+redirect = "https://godoc.org/git.example.com/example/gitpackage"
+
+# Of course, multiple package configs are supported. The first config in the
+# file whose prefix matches the requested import path is used.
+[[packages]]
+prefix = "example.com/mymodule"
+import = "mod https://gomodules.example.com"
+redirect = "https://example.com/projects/mymodule/index.html"
