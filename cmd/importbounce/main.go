@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -22,7 +21,7 @@ func main() {
 	flag.Parse()
 
 	bouncer := &bouncer{
-		ConfigURL: requireEnv("IMPORTBOUNCE_CONFIG_URL"),
+		FetchConfig: getConfigFetcher(),
 	}
 
 	if *httpAddr != "" {
@@ -35,16 +34,8 @@ func main() {
 	lambda.Start(httpadapter.New(bouncer).Proxy)
 }
 
-func requireEnv(name string) string {
-	result, ok := os.LookupEnv(name)
-	if !ok {
-		log.Fatalf("must have %q in environment", name)
-	}
-	return result
-}
-
 type bouncer struct {
-	ConfigURL string
+	FetchConfig configFetcher
 }
 
 var responseTmpl = template.Must(template.New("").Parse(`<html>
@@ -88,14 +79,14 @@ func (b *bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *bouncer) loadConfig() (*config, error) {
-	resp, err := http.Get(b.ConfigURL)
+	r, err := b.FetchConfig()
 	if err != nil {
 		return nil, xerrors.Errorf("fetching config: %w", err)
 	}
-	defer resp.Body.Close()
+	defer r.Close()
 
 	var c config
-	_, err = toml.DecodeReader(resp.Body, &c)
+	_, err = toml.DecodeReader(r, &c)
 	if err != nil {
 		err = xerrors.Errorf("decoding config: %w", err)
 	}
