@@ -7,7 +7,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"golang.org/x/xerrors"
 )
 
@@ -35,6 +39,7 @@ func getConfigFetcher() configFetcher {
 var fetcherFactories = map[string]func(*url.URL) configFetcher{
 	"http": getHTTPConfigFetcher,
 	"file": getFileConfigFetcher,
+	"s3":   getS3ConfigFetcher,
 }
 
 func getHTTPConfigFetcher(u *url.URL) configFetcher {
@@ -55,5 +60,23 @@ func getFileConfigFetcher(u *url.URL) configFetcher {
 			err = xerrors.Errorf("opening config: %w", err)
 		}
 		return f, err
+	}
+}
+
+func getS3ConfigFetcher(u *url.URL) configFetcher {
+	sess := session.Must(session.NewSession())
+	s3Client := s3.New(sess)
+
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(u.Host),
+		Key:    aws.String(strings.TrimPrefix(u.Path, "/")),
+	}
+
+	return func() (io.ReadCloser, error) {
+		output, err := s3Client.GetObject(input)
+		if err != nil {
+			err = xerrors.Errorf("fetching config: %w", err)
+		}
+		return output.Body, err
 	}
 }
