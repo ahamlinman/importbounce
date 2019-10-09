@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -47,6 +47,16 @@ type bouncer struct {
 	ConfigURL string
 }
 
+var responseTmpl = template.Must(template.New("").Parse(`<html>
+<head>
+<meta name="go-import" content="{{.Prefix}} {{.Import}}">
+<meta http-equiv="refresh" content="0; url={{.Redirect}}">
+</head>
+<body>
+Redirecting to <a href="{{.Redirect}}">{{.Redirect}}</a>...
+</body>
+</html>`))
+
 func (b *bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	config, err := b.loadConfig()
 	if err != nil {
@@ -55,8 +65,26 @@ func (b *bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: not this
-	json.NewEncoder(w).Encode(config)
+	path := r.Host + r.URL.Path
+	pkgConf := config.FindPackage(path)
+
+	if pkgConf == (packageConfig{}) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Package not found\n"))
+		return
+	}
+
+	if r.URL.Query().Get("go-get") == "" {
+		http.Redirect(w, r, pkgConf.Redirect, http.StatusFound)
+		return
+	}
+
+	err = responseTmpl.Execute(w, pkgConf)
+	if err != nil {
+		// This is going to be best-effort
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (b *bouncer) loadConfig() (*config, error) {
