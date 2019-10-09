@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -58,6 +59,21 @@ func (b *bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(config)
 }
 
+func (b *bouncer) loadConfig() (*config, error) {
+	resp, err := http.Get(b.ConfigURL)
+	if err != nil {
+		return nil, xerrors.Errorf("fetching config: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var c config
+	_, err = toml.DecodeReader(resp.Body, &c)
+	if err != nil {
+		err = xerrors.Errorf("decoding config: %w", err)
+	}
+	return &c, err
+}
+
 type config struct {
 	Packages []packageConfig `toml:"packages"`
 }
@@ -68,17 +84,21 @@ type packageConfig struct {
 	Redirect string `toml:"redirect"`
 }
 
-func (b *bouncer) loadConfig() (config, error) {
-	resp, err := http.Get(b.ConfigURL)
-	if err != nil {
-		return config{}, xerrors.Errorf("fetching config: %w", err)
-	}
-	defer resp.Body.Close()
+func (c *config) FindPackage(path string) packageConfig {
+	for _, pkgConf := range c.Packages {
+		prefix := strings.TrimSuffix(pkgConf.Prefix, "/")
 
-	var c config
-	_, err = toml.DecodeReader(resp.Body, &c)
-	if err != nil {
-		err = xerrors.Errorf("decoding config: %w", err)
+		if !strings.HasPrefix(path, prefix) {
+			continue
+		}
+
+		rest := path[len(prefix):]
+		if len(rest) != 0 && !strings.HasPrefix(rest, "/") {
+			continue
+		}
+
+		return pkgConf
 	}
-	return c, err
+
+	return packageConfig{}
 }
