@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	http.DefaultClient.Timeout = 10 * time.Second
+	http.DefaultClient.Timeout = 2500 * time.Millisecond
 
 	httpAddr := flag.String("http", "", "Serve HTTP on the provided address instead of AWS Lambda")
 	flag.Parse()
