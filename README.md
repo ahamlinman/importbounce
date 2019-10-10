@@ -30,10 +30,13 @@ To use the template, run `make` to build a Lambda-compatible binary, use `aws
 cloudformation package` to upload the binary to S3, then use `aws
 cloudformation deploy` to create the stack. Before the stack can be fully
 deployed, you will need to go into the AWS Certificate Manager and follow the
-directions to validate the TLS certificate generated for your domain.
+directions to validate the TLS certificate generated for your domain. You will
+also need to upload your TOML configuration as `importbounce.toml` to the S3
+bucket created by CloudFormation (the filename can be changed with a stack
+parameter if desired).
 
-You can also run importbounce as a standard HTTP server by passing the `-http`
-flag with a listening address (e.g. `-http 0.0.0.0:8080`).
+Alternatively, you can run importbounce as a standard HTTP server by passing
+the `-http` flag with a listening address (e.g. `-http 0.0.0.0:8080`).
 
 ## Future Work
 
