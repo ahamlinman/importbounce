@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,35 +16,42 @@ import (
 	"golang.org/x/xerrors"
 )
 
-type configFetcher func(context.Context) (io.ReadCloser, error)
+// FetchConfigFunc is a type for functions that can load TOML configuration
+// files for a Bouncer.
+type FetchConfigFunc func(context.Context) (io.ReadCloser, error)
 
-func getConfigFetcher() configFetcher {
-	urlString, ok := os.LookupEnv("IMPORTBOUNCE_CONFIG_URL")
-	if !ok {
-		log.Fatal("must set IMPORTBOUNCE_CONFIG_URL")
+// FetchConfigFuncFromURL returns a FetchConfigFunc based on the value of the
+// provided URL string. The following schemes are supported:
+//
+//   http://{path...}           Retrieve via HTTP request
+//   https://{path...}          Retrieve via HTTPS request
+//   file://{path...}           Retrieve from the local filesystem
+//   s3://{bucket}/{path...}    Retrieve from Amazon S3
+func FetchConfigFuncFromURL(urlString string) (FetchConfigFunc, error) {
+	if urlString == "" {
+		return nil, xerrors.New("config URL not provided")
 	}
 
 	u, err := url.Parse(urlString)
 	if err != nil {
-		log.Fatalf("invalid IMPORTBOUNCE_CONFIG_URL: %v", err)
+		return nil, xerrors.Errorf("invalid config URL %q: %v", urlString, err)
 	}
 
 	if factory, ok := fetcherFactories[u.Scheme]; ok {
-		return factory(u)
+		return factory(u), nil
 	}
 
-	log.Fatalf("unrecognized IMPORTBOUNCE_CONFIG_URL scheme %v", u.Scheme)
-	return nil
+	return nil, xerrors.Errorf("unknown config URL scheme %q", u.Scheme)
 }
 
-var fetcherFactories = map[string]func(*url.URL) configFetcher{
+var fetcherFactories = map[string]func(*url.URL) FetchConfigFunc{
 	"http":  getHTTPConfigFetcher,
 	"https": getHTTPConfigFetcher,
 	"file":  getFileConfigFetcher,
 	"s3":    getS3ConfigFetcher,
 }
 
-func getHTTPConfigFetcher(u *url.URL) configFetcher {
+func getHTTPConfigFetcher(u *url.URL) FetchConfigFunc {
 	return func(_ context.Context) (io.ReadCloser, error) {
 		resp, err := http.Get(u.String())
 		if err != nil {
@@ -55,7 +61,7 @@ func getHTTPConfigFetcher(u *url.URL) configFetcher {
 	}
 }
 
-func getFileConfigFetcher(u *url.URL) configFetcher {
+func getFileConfigFetcher(u *url.URL) FetchConfigFunc {
 	return func(_ context.Context) (io.ReadCloser, error) {
 		path := filepath.Join(u.Host, u.Path)
 		f, err := os.Open(path)
@@ -66,7 +72,7 @@ func getFileConfigFetcher(u *url.URL) configFetcher {
 	}
 }
 
-func getS3ConfigFetcher(u *url.URL) configFetcher {
+func getS3ConfigFetcher(u *url.URL) FetchConfigFunc {
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(strings.TrimPrefix(u.Path, "/")),
