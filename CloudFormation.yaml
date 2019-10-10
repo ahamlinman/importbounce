@@ -15,6 +15,9 @@ Parameters:
     Default: importbounce.toml
 
 Resources:
+  ConfigBucket:
+    Type: AWS::S3::Bucket
+
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -28,9 +31,6 @@ Resources:
           IMPORTBOUNCE_CONFIG_URL: !Sub 's3://${ConfigBucket}/${ConfigFilePath}'
       TracingConfig:
         Mode: Active
-
-  ConfigBucket:
-    Type: AWS::S3::Bucket
 
   LambdaFunctionRole:
     Type: AWS::IAM::Role
@@ -90,6 +90,8 @@ Resources:
 
   RestApiDeployment:
     Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - RestApiMethod
     Properties:
       RestApiId: !Ref RestApi
 
