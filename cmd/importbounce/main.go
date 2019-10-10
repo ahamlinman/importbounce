@@ -56,7 +56,11 @@ func (b *bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := r.Host + r.URL.Path
+	// The hostname provided by the Lambda proxy library is a hardcoded default,
+	// rather than the one requested by the user. This can be overridden with an
+	// environment variable, but reading the Host header manually should be more
+	// robust.
+	path := r.Header.Get("Host") + r.URL.Path
 	pkgConf := config.FindPackage(path)
 
 	if pkgConf == (packageConfig{}) {
