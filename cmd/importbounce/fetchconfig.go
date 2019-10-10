@@ -39,9 +39,10 @@ func getConfigFetcher() configFetcher {
 }
 
 var fetcherFactories = map[string]func(*url.URL) configFetcher{
-	"http": getHTTPConfigFetcher,
-	"file": getFileConfigFetcher,
-	"s3":   getS3ConfigFetcher,
+	"http":  getHTTPConfigFetcher,
+	"https": getHTTPConfigFetcher,
+	"file":  getFileConfigFetcher,
+	"s3":    getS3ConfigFetcher,
 }
 
 func getHTTPConfigFetcher(u *url.URL) configFetcher {
