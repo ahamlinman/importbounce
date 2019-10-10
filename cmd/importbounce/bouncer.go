@@ -43,8 +43,7 @@ func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pkgConf := config.FindPackage(path)
 
 	if pkgConf == (packageConfig{}) {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Package not found\n"))
+		b.tryDefaultRedirect(w, r, config.DefaultRedirect)
 		return
 	}
 
@@ -72,4 +71,14 @@ func (b *Bouncer) loadConfig(ctx context.Context) (config, error) {
 		err = xerrors.Errorf("decoding config: %w", err)
 	}
 	return c, err
+}
+
+func (b *Bouncer) tryDefaultRedirect(w http.ResponseWriter, r *http.Request, url string) {
+	if url == "" || r.URL.Query().Get("go-get") != "" {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Package not found\n"))
+		return
+	}
+
+	http.Redirect(w, r, url, http.StatusFound)
 }

@@ -3,7 +3,8 @@ package main
 import "strings"
 
 type config struct {
-	Packages []packageConfig `toml:"packages"`
+	DefaultRedirect string          `toml:"default_redirect"`
+	Packages        []packageConfig `toml:"packages"`
 }
 
 type packageConfig struct {

@@ -1,9 +1,10 @@
-# See https://golang.org/cmd/go/#hdr-Remote_import_paths to learn more about
-# how remote import paths work.
+# Optionally, you can provide a default redirect URL for web visitors who
+# navigate to a package that doesn't exist. If not provided, a barebones 404
+# page will be returned.
+default_redirect = "https://example.com"
 
-# Every package you want importbounce to handle should have a table in your
-# TOML config, like the examples below.
-
+# Every package you want importbounce to handle should be configured like the
+# examples below.
 [[packages]]
 # The import path prefix. This must match a full segment of the requested
 # import path for this config to apply. For example, this config would not
@@ -11,7 +12,7 @@
 prefix = "example.com/gitpackage"
 
 # The combination of "vcs" and "repo-root" to use in the "go-import" meta tag,
-# as described in the Go documentation above.
+# as described at https://golang.org/cmd/go/#hdr-Remote_import_paths.
 import = "git https://git.example.com/example/gitpackage"
 
 # The site to which web visitors should be redirected. This can be a godoc.org
