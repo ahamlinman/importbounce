@@ -121,3 +121,11 @@ Resources:
       DomainValidationOptions:
         - DomainName: !Ref DomainName
           ValidationDomain: !Ref ValidationDomainName
+
+Outputs:
+  ConfigS3URI:
+    Description: The location in S3 to which the TOML configuration should be uploaded
+    Value: !Sub 's3://${ConfigBucket}/${ConfigFilePath}'
+  ApiDomain:
+    Description: The CNAME to which the domain name should point
+    Value: !GetAtt RestApiDomainName.RegionalDomainName
