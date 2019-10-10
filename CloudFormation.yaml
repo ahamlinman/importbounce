@@ -6,9 +6,6 @@ Parameters:
   DomainName:
     Type: String
     Description: Domain name for the redirector to host
-  ValidationDomainName:
-    Type: String
-    Description: Domain name to use for email-based certificate validation
   ConfigFilePath:
     Type: String
     Description: Path to the TOML config file in the S3 bucket
@@ -122,11 +119,7 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Ref DomainName
-      # TODO: Use DNS instead
-      ValidationMethod: EMAIL
-      DomainValidationOptions:
-        - DomainName: !Ref DomainName
-          ValidationDomain: !Ref ValidationDomainName
+      ValidationMethod: DNS
 
 Outputs:
   ConfigS3URI:
