@@ -1,4 +1,4 @@
-package main
+package main // import "go.alexhamlin.co/importbounce/cmd/importbounce"
 
 import (
 	"flag"
