@@ -52,12 +52,18 @@ var fetcherFactories = map[string]func(*url.URL) FetchConfigFunc{
 }
 
 func getHTTPConfigFetcher(u *url.URL) FetchConfigFunc {
-	return func(_ context.Context) (io.ReadCloser, error) {
-		resp, err := http.Get(u.String())
+	return func(ctx context.Context) (io.ReadCloser, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 		if err != nil {
-			err = xerrors.Errorf("fetching config: %w", err)
+			return nil, xerrors.Errorf("fetching config: %w", err)
 		}
-		return resp.Body, err
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, xerrors.Errorf("fetching config: %w", err)
+		}
+
+		return resp.Body, nil
 	}
 }
 
@@ -66,9 +72,9 @@ func getFileConfigFetcher(u *url.URL) FetchConfigFunc {
 		path := filepath.Join(u.Host, u.Path)
 		f, err := os.Open(path)
 		if err != nil {
-			err = xerrors.Errorf("opening config: %w", err)
+			return nil, xerrors.Errorf("opening config: %w", err)
 		}
-		return f, err
+		return f, nil
 	}
 }
 
@@ -84,8 +90,8 @@ func getS3ConfigFetcher(u *url.URL) FetchConfigFunc {
 	return func(ctx context.Context) (io.ReadCloser, error) {
 		output, err := s3Client.GetObjectWithContext(ctx, input)
 		if err != nil {
-			err = xerrors.Errorf("fetching config: %w", err)
+			return nil, xerrors.Errorf("fetching config: %w", err)
 		}
-		return output.Body, err
+		return output.Body, nil
 	}
 }
