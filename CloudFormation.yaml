@@ -26,6 +26,8 @@ Resources:
       Environment:
         Variables:
           IMPORTBOUNCE_CONFIG_URL: !Sub 's3://${ConfigBucket}/${ConfigFilePath}'
+      TracingConfig:
+        Mode: Active
 
   ConfigBucket:
     Type: AWS::S3::Bucket
@@ -42,6 +44,7 @@ Resources:
           Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
       Policies:
         - PolicyName: ConfigBucketGetObject
           PolicyDocument:

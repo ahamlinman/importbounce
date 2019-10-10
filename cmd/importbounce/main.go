@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"html/template"
 	"log"
@@ -31,7 +32,7 @@ func main() {
 	}
 
 	log.Printf("starting AWS Lambda listener")
-	lambda.Start(httpadapter.New(bouncer).Proxy)
+	lambda.Start(httpadapter.New(bouncer).ProxyWithContext)
 }
 
 type bouncer struct {
@@ -49,7 +50,7 @@ Redirecting to <a href="{{.Redirect}}">{{.Redirect}}</a>...
 </html>`))
 
 func (b *bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	config, err := b.loadConfig()
+	config, err := b.loadConfig(r.Context())
 	if err != nil {
 		log.Printf("failed to load config: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -82,8 +83,8 @@ func (b *bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (b *bouncer) loadConfig() (*config, error) {
-	r, err := b.FetchConfig()
+func (b *bouncer) loadConfig(ctx context.Context) (*config, error) {
+	r, err := b.FetchConfig(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf("fetching config: %w", err)
 	}
