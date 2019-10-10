@@ -18,8 +18,8 @@ import = "git https://git.example.com/example/gitpackage"
 # link, a GitHub link, a link to your website, etc.
 redirect = "https://godoc.org/git.example.com/example/gitpackage"
 
-# Of course, multiple package configs are supported. The first config in the
-# file whose prefix matches the requested import path is used.
+# Multiple package configs are supported. The first config in the file whose
+# prefix matches the requested import path is used.
 [[packages]]
 prefix = "example.com/mymodule"
 import = "mod https://gomodules.example.com"
