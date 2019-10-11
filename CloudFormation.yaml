@@ -27,6 +27,7 @@ Resources:
       Environment:
         Variables:
           IMPORTBOUNCE_CONFIG_URL: !Sub 's3://${ConfigBucket}/${ConfigFilePath}'
+          GO_API_HOST: !Sub 'https://${DomainName}'
       TracingConfig:
         Mode: Active
 
@@ -106,27 +107,34 @@ Resources:
       RestApiId: !Ref RestApi
       DeploymentId: !Ref RestApiDeployment
 
-  RestApiDomainName:
-    Type: AWS::ApiGateway::DomainName
-    Properties:
-      DomainName: !Ref DomainName
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      RegionalCertificateArn: !Ref RestApiCertificate
-
-  RestApiBasePathMapping:
-    Type: AWS::ApiGateway::BasePathMapping
-    Properties:
-      RestApiId: !Ref RestApi
-      DomainName: !Ref RestApiDomainName
-      Stage: !Ref RestApiStage
-
-  RestApiCertificate:
+  Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Ref DomainName
       ValidationMethod: DNS
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Aliases:
+          - !Ref DomainName
+        Origins:
+          - Id: RestApi
+            DomainName: !Sub '${RestApi}.execute-api.${AWS::Region}.amazonaws.com'
+            OriginPath: !Sub '/${RestApiStage}'
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: RestApi
+          ForwardedValues:
+            QueryString: true
+          ViewerProtocolPolicy: redirect-to-https
+          DefaultTTL: 0
+        ViewerCertificate:
+          AcmCertificateArn: !Ref Certificate
+          SslSupportMethod: sni-only
 
 Outputs:
   ConfigS3URI:
@@ -134,4 +142,4 @@ Outputs:
     Value: !Sub 's3://${ConfigBucket}/${ConfigFilePath}'
   ApiDomain:
     Description: The CNAME to which the domain name should point
-    Value: !GetAtt RestApiDomainName.RegionalDomainName
+    Value: !GetAtt CloudFrontDistribution.DomainName

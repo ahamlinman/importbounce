@@ -25,7 +25,12 @@ using one of the following schemes:
 ## Deployment
 
 This repo includes an AWS CloudFormation template (`CloudFormation.yaml`) that
-deploys importbounce as an AWS Lambda function serving your custom domain name.
+deploys importbounce as an AWS Lambda function serving your custom domain name
+through CloudFront.
+
+**NOTE:** The provided template can only be deployed to the `us-east-1` region,
+since that's where CloudFront requires the generated TLS certificate to be.
+
 To use the template, run `make` to build a Lambda-compatible binary, use `aws
 cloudformation package` to upload the binary to S3, then use `aws
 cloudformation deploy` to create the stack. Before the stack can be fully
@@ -40,8 +45,7 @@ the `-http` flag with a listening address (e.g. `-http 0.0.0.0:8080`).
 
 ## Future Work
 
-* DNS validation for AWS Certificate Manager certificates instead of email
-  validation.
 * Mechanism so that accidentally deploying a bad config doesn't take down your
   whole domain.
 * Making the CloudFormation template easier for new users to deploy.
+* Enabling non-zero cache TTLs in CloudFront.
