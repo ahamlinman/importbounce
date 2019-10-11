@@ -46,10 +46,11 @@ func FetchConfigFuncFromURL(urlString string) (FetchConfigFunc, error) {
 }
 
 var fetcherFactories = map[string]func(*url.URL) FetchConfigFunc{
-	"http":  getHTTPConfigFetcher,
-	"https": getHTTPConfigFetcher,
-	"file":  getFileConfigFetcher,
-	"s3":    getS3ConfigFetcher,
+	"http":     getHTTPConfigFetcher,
+	"https":    getHTTPConfigFetcher,
+	"file":     getFileConfigFetcher,
+	"s3":       getS3ConfigFetcher,
+	"s3+nossl": getS3ConfigFetcher,
 }
 
 func getHTTPConfigFetcher(u *url.URL) FetchConfigFunc {
@@ -85,7 +86,11 @@ func getS3ConfigFetcher(u *url.URL) FetchConfigFunc {
 		Key:    aws.String(strings.TrimPrefix(u.Path, "/")),
 	}
 
-	s3Client := s3.New(session.Must(session.NewSession()))
+	disableSSL := strings.HasSuffix(u.Scheme, "+nossl")
+	s3Client := s3.New(
+		session.Must(session.NewSession()),
+		&aws.Config{DisableSSL: aws.Bool(disableSSL)},
+	)
 	xray.AWS(s3Client.Client)
 
 	return func(ctx context.Context) (io.ReadCloser, error) {
