@@ -22,9 +22,7 @@ var responseTmpl = template.Must(template.New("").Parse(`<html>
 <meta name="go-import" content="{{.Prefix}} {{.Import}}">
 <meta http-equiv="refresh" content="0; url={{.Redirect}}">
 </head>
-<body>
-Redirecting to <a href="{{.Redirect}}">{{.Redirect}}</a>...
-</body>
+<body>Redirecting…</body>
 </html>`))
 
 func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
