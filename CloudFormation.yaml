@@ -10,6 +10,13 @@ Parameters:
     Type: String
     Description: Path to the TOML config file in the S3 bucket
     Default: importbounce.toml
+  TracingEnabled:
+    Type: String
+    Description: If 'true', turn on X-Ray tracing for all supported resources
+    Default: 'true'
+
+Conditions:
+  HasTracingEnabled: !Equals [!Ref TracingEnabled, 'true']
 
 Resources:
   ConfigBucket:
@@ -29,7 +36,7 @@ Resources:
           IMPORTBOUNCE_CONFIG_URL: !Sub 's3://${ConfigBucket}/${ConfigFilePath}'
           GO_API_HOST: !Sub 'https://${DomainName}'
       TracingConfig:
-        Mode: Active
+        Mode: !If [HasTracingEnabled, Active, PassThrough]
 
   LambdaFunctionRole:
     Type: AWS::IAM::Role
@@ -106,6 +113,7 @@ Resources:
     Properties:
       RestApiId: !Ref RestApi
       DeploymentId: !Ref RestApiDeployment
+      TracingEnabled: !If [HasTracingEnabled, true, false]
 
   Certificate:
     Type: AWS::CertificateManager::Certificate
