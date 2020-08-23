@@ -18,10 +18,10 @@ const contentTypeHeaderKey = "Content-Type"
 // ProxyResponseWriter implements http.ResponseWriter and adds the method
 // necessary to return an events.APIGatewayProxyResponse object
 type ProxyResponseWriter struct {
-	headers http.Header
-	body    bytes.Buffer
-	status  int
-	observers []chan <-bool
+	headers   http.Header
+	body      bytes.Buffer
+	status    int
+	observers []chan<- bool
 }
 
 // NewProxyResponseWriter returns a new ProxyResponseWriter object.
@@ -29,8 +29,8 @@ type ProxyResponseWriter struct {
 // status code of -1
 func NewProxyResponseWriter() *ProxyResponseWriter {
 	return &ProxyResponseWriter{
-		headers: make(http.Header),
-		status:  defaultStatusCode,
+		headers:   make(http.Header),
+		status:    defaultStatusCode,
 		observers: make([]chan<- bool, 0),
 	}
 
@@ -59,7 +59,7 @@ func (r *ProxyResponseWriter) Header() http.Header {
 // was set before with the WriteHeader method it sets the status
 // for the response to 200 OK.
 func (r *ProxyResponseWriter) Write(body []byte) (int, error) {
-	if r.status == -1 {
+	if r.status == defaultStatusCode {
 		r.status = http.StatusOK
 	}
 
@@ -103,8 +103,15 @@ func (r *ProxyResponseWriter) GetProxyResponse() (events.APIGatewayProxyResponse
 		isBase64 = true
 	}
 
+	proxyHeaders := make(map[string]string)
+
+	for h := range r.headers {
+		proxyHeaders[h] = r.headers.Get(h)
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode:        r.status,
+		Headers:           proxyHeaders,
 		MultiValueHeaders: http.Header(r.headers),
 		Body:              output,
 		IsBase64Encoded:   isBase64,
