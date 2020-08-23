@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
-	"golang.org/x/xerrors"
 )
 
 // Bouncer handles HTTP requests for Go imports by retrieving a configuration
@@ -55,14 +55,14 @@ func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (b *Bouncer) loadConfig(ctx context.Context) (config, error) {
 	r, err := b.FetchConfig(ctx)
 	if err != nil {
-		return config{}, xerrors.Errorf("fetching config: %w", err)
+		return config{}, fmt.Errorf("fetching config: %w", err)
 	}
 	defer r.Close()
 
 	var c config
 	_, err = toml.DecodeReader(r, &c)
 	if err != nil {
-		err = xerrors.Errorf("decoding config: %w", err)
+		err = fmt.Errorf("decoding config: %w", err)
 	}
 	return c, err
 }

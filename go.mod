@@ -10,5 +10,4 @@ require (
 	github.com/awslabs/aws-lambda-go-api-proxy v0.8.0
 	github.com/onsi/ginkgo v0.0.0-20180119174237-747514b53ddd // indirect
 	github.com/onsi/gomega v1.3.0 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
