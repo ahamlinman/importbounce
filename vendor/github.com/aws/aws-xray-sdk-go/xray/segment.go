@@ -83,8 +83,8 @@ func BeginSegmentWithSampling(ctx context.Context, name string, r *http.Request,
 	}
 
 	if r == nil || traceHeader == nil {
-		// Sampling strategy fallbacks to default sampling in the case of directly using BeginSegment API without any instrumentation
-		sd := seg.ParentSegment.GetConfiguration().SamplingStrategy.ShouldTrace(&sampling.Request{})
+		// No header or request information provided so we can only evaluate sampling based on the serviceName
+		sd := seg.ParentSegment.GetConfiguration().SamplingStrategy.ShouldTrace(&sampling.Request{ServiceName: name})
 		seg.Sampled = sd.Sample
 		logger.Debugf("SamplingStrategy decided: %t", seg.Sampled)
 		seg.AddRuleName(sd)
@@ -487,8 +487,8 @@ func (seg *Segment) addPlugin(metadata *plugins.PluginMetadata) {
 func (seg *Segment) addSDKAndServiceInformation() {
 	seg.GetAWS()["xray"] = SDK{Version: SDKVersion, Type: SDKType}
 
-	seg.GetService().Compiler = runtime.Compiler
-	seg.GetService().CompilerVersion = runtime.Version()
+	seg.GetService().Runtime = runtime.Compiler
+	seg.GetService().RuntimeVersion = runtime.Version()
 }
 
 func (seg *Segment) beforeEmitSubsegment(s *Segment) {

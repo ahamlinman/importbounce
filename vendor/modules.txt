@@ -1,14 +1,14 @@
 # github.com/BurntSushi/toml v0.3.1
 ## explicit
 github.com/BurntSushi/toml
-# github.com/aws/aws-lambda-go v1.20.0
+# github.com/aws/aws-lambda-go v1.22.0
 ## explicit
 github.com/aws/aws-lambda-go/events
 github.com/aws/aws-lambda-go/lambda
 github.com/aws/aws-lambda-go/lambda/handlertrace
 github.com/aws/aws-lambda-go/lambda/messages
 github.com/aws/aws-lambda-go/lambdacontext
-# github.com/aws/aws-sdk-go v1.36.7
+# github.com/aws/aws-sdk-go v1.37.15
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -21,6 +21,7 @@ github.com/aws/aws-sdk-go/aws/credentials
 github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
 github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
 github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/ssocreds
 github.com/aws/aws-sdk-go/aws/credentials/stscreds
 github.com/aws/aws-sdk-go/aws/csm
 github.com/aws/aws-sdk-go/aws/defaults
@@ -54,10 +55,12 @@ github.com/aws/aws-sdk-go/private/protocol/restjson
 github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/s3
+github.com/aws/aws-sdk-go/service/sso
+github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/aws/aws-sdk-go/service/xray
-# github.com/aws/aws-xray-sdk-go v1.1.0
+# github.com/aws/aws-xray-sdk-go v1.3.0
 ## explicit
 github.com/aws/aws-xray-sdk-go/daemoncfg
 github.com/aws/aws-xray-sdk-go/header
