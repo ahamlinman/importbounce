@@ -12,4 +12,3 @@ lambda-dist/importbounce: go.mod go.sum $(shell find . -name '*.go')
 				 -o "$@" \
 				 ./cmd/importbounce
 	if type strip; then strip "$@"; fi
-	if type upx;   then upx "$@";   fi
