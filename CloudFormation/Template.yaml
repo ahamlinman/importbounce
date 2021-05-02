@@ -37,7 +37,7 @@ Resources:
       Description: Redirect server for custom Go import paths
       Role: !GetAtt LambdaFunctionRole.Arn
       Runtime: go1.x
-      Code: ./lambda-dist
+      Code: ./dist
       Handler: importbounce
       Environment:
         Variables:
