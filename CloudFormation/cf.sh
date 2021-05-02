@@ -19,13 +19,9 @@ $0 package <S3 bucket>
   CloudFormation template that refers to the uploaded file.
 
 $0 deploy <stack name> [args...]
-  Deploy a packaged template using CloudFormation, then print the URL for the
-  deployed API.
-
-  Additional arguments are passed directly to "aws cloudformation deploy". In
-  particular, when deploying the stack for the first time, use
-  "--parameter-overrides SlackToken=<token>" to set the token used to
-  authenticate requests from Slack.
+  Deploy a packaged template using CloudFormation, then print info about the
+  deployment. Additional arguments are passed directly to "aws cloudformation
+  deploy", and may be used to override input values for the stack.
 
 $0 build-deploy <S3 bucket> <stack name> [args...]
   Build, package, and deploy all in one step.
@@ -73,6 +69,7 @@ package () (
 
   set -x
   aws cloudformation package \
+    --region us-east-1 \
     --template-file Template.yaml \
     --output-template-file Package.yaml \
     --s3-bucket "$s3_bucket"
@@ -90,6 +87,7 @@ deploy () (
   (
     set -x
     aws cloudformation deploy \
+      --region us-east-1 \
       --template-file Package.yaml \
       --capabilities CAPABILITY_IAM \
       --stack-name "$stack_name" \
@@ -99,15 +97,17 @@ deploy () (
 
   echo -e "\\nUpload your importbounce configuration to:"
   aws cloudformation describe-stacks \
+    --region us-east-1 \
     --stack-name "$stack_name" \
     --output text \
-    --query 'Stacks[0].Outputs[0].OutputValue'
+    --query "Stacks[0].Outputs[?OutputKey=='ConfigS3URI'] | [0].OutputValue"
 
-  echo -e "\\nPoint your domain name to:"
+  echo -e "\\nPoint your CNAME to:"
   aws cloudformation describe-stacks \
+    --region us-east-1 \
     --stack-name "$stack_name" \
     --output text \
-    --query 'Stacks[0].Outputs[1].OutputValue'
+    --query "Stacks[0].Outputs[?OutputKey=='ApiDomain'] | [0].OutputValue"
 )
 
 build-deploy () {
