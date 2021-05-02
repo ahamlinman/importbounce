@@ -24,28 +24,28 @@ using one of the following schemes:
 
 ## Deployment
 
-This repo includes an AWS CloudFormation template (`CloudFormation.yaml`) that
-deploys importbounce as an AWS Lambda function serving your custom domain name
-through CloudFront.
+The `CloudFormation/` directory includes an AWS CloudFormation template
+(`Template.yaml`) and helper script (`cf.sh`) that deploys importbounce as an
+AWS Lambda function in the `us-east-1` region serving a single custom domain
+name through CloudFront. `cd` into that directory and run `./cf.sh help` for
+more information.
 
-**NOTE:** The provided template can only be deployed to the `us-east-1` region,
-since that's where CloudFront requires the generated TLS certificate to be.
+Before the stack can be fully deployed for the first time, you will need to go
+into the AWS Certificate Manager and follow the directions to validate the TLS
+certificate generated for your domain. After the initial deployment, you will
+need to upload your TOML configuration to the S3 bucket created by
+CloudFormation, then set up a CNAME to the CloudFront domain. `cf.sh` will
+print more information about this after you deploy the stack.
 
-To use the template, run `make` to build a Lambda-compatible binary, use `aws
-cloudformation package` to upload the binary to S3, then use `aws
-cloudformation deploy` to create the stack. Before the stack can be fully
-deployed, you will need to go into the AWS Certificate Manager and follow the
-directions to validate the TLS certificate generated for your domain. You will
-also need to upload your TOML configuration as `importbounce.toml` to the S3
-bucket created by CloudFormation (the filename can be changed with a stack
-parameter if desired).
+Note that the template can only be deployed to `us-east-1`, as CloudFront
+requires the generated TLS certificate to be there.
 
-Alternatively, you can run importbounce as a standard HTTP server by passing
-the `-http` flag with a listening address (e.g. `-http 0.0.0.0:8080`).
+If you don't wish to use the serverless AWS Lambda deployment, you can run
+importbounce as a standard HTTP server by passing the `-http` flag with a
+listening address (e.g. `-http 0.0.0.0:8080`).
 
 ## Future Work
 
 * Mechanism so that accidentally deploying a bad config doesn't take down your
   whole domain.
-* Making the CloudFormation template easier for new users to deploy.
 * Enabling non-zero cache TTLs in CloudFront.
