@@ -8,7 +8,7 @@ github.com/aws/aws-lambda-go/lambda
 github.com/aws/aws-lambda-go/lambda/handlertrace
 github.com/aws/aws-lambda-go/lambda/messages
 github.com/aws/aws-lambda-go/lambdacontext
-# github.com/aws/aws-sdk-go v1.38.7
+# github.com/aws/aws-sdk-go v1.38.30
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -74,7 +74,7 @@ github.com/aws/aws-xray-sdk-go/strategy/sampling
 github.com/aws/aws-xray-sdk-go/utils
 github.com/aws/aws-xray-sdk-go/xray
 github.com/aws/aws-xray-sdk-go/xraylog
-# github.com/awslabs/aws-lambda-go-api-proxy v0.9.0
+# github.com/awslabs/aws-lambda-go-api-proxy v0.10.0
 ## explicit
 github.com/awslabs/aws-lambda-go-api-proxy/core
 github.com/awslabs/aws-lambda-go-api-proxy/httpadapter
