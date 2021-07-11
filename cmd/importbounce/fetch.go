@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	xrayawsv2 "github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 )
 
 // FetchConfigFunc is a type for functions that can load TOML configuration
@@ -86,15 +86,19 @@ func getS3ConfigFetcher(u *url.URL) FetchConfigFunc {
 		Key:    aws.String(strings.TrimPrefix(u.Path, "/")),
 	}
 
+	cfg, err := awsconfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		panic(fmt.Errorf("loading AWS config: %w", err))
+	}
+	xrayawsv2.AWSV2Instrumentor(&cfg.APIOptions)
+
 	disableSSL := strings.HasSuffix(u.Scheme, "+nossl")
-	s3Client := s3.New(
-		session.Must(session.NewSession()),
-		&aws.Config{DisableSSL: aws.Bool(disableSSL)},
-	)
-	xray.AWS(s3Client.Client)
+	s3Client := s3.NewFromConfig(cfg, func(options *s3.Options) {
+		options.EndpointOptions.DisableHTTPS = disableSSL
+	})
 
 	return func(ctx context.Context) (io.ReadCloser, error) {
-		output, err := s3Client.GetObjectWithContext(ctx, input)
+		output, err := s3Client.GetObject(ctx, input)
 		if err != nil {
 			return nil, fmt.Errorf("fetching config: %w", err)
 		}
