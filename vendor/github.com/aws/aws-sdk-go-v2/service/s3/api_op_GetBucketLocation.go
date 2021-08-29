@@ -23,10 +23,12 @@ import (
 // LocationConstraint request parameter in a CreateBucket request. For more
 // information, see CreateBucket
 // (https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html). To use
-// this implementation of the operation, you must be the bucket owner. The
-// following operations are related to GetBucketLocation:
+// this implementation of the operation, you must be the bucket owner. To use this
+// API against an access point, provide the alias of the access point in place of
+// the bucket name. The following operations are related to GetBucketLocation:
 //
-// * GetObject
+// *
+// GetObject
 // (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
 //
 // *
@@ -57,6 +59,8 @@ type GetBucketLocationInput struct {
 	// The account ID of the expected bucket owner. If the bucket is owned by a
 	// different account, the request will fail with an HTTP 403 (Access Denied) error.
 	ExpectedBucketOwner *string
+
+	noSmithyDocumentSerde
 }
 
 type GetBucketLocationOutput struct {
@@ -69,6 +73,8 @@ type GetBucketLocationOutput struct {
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
+
+	noSmithyDocumentSerde
 }
 
 func (c *Client) addOperationGetBucketLocationMiddlewares(stack *middleware.Stack, options Options) (err error) {
