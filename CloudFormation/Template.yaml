@@ -84,7 +84,7 @@ Resources:
     Properties:
       FunctionName: !GetAtt Function.Arn
       Principal: apigateway.amazonaws.com
-      Action: lambda:invokeFunction
+      Action: lambda:InvokeFunction
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*'
 
   RestApi:
