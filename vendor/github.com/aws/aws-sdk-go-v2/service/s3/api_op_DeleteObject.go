@@ -80,7 +80,8 @@ type DeleteObjectInput struct {
 	Key *string
 
 	// Indicates whether S3 Object Lock should bypass Governance-mode restrictions to
-	// process this operation.
+	// process this operation. To use this header, you must have the
+	// s3:PutBucketPublicAccessBlock permission.
 	BypassGovernanceRetention bool
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
@@ -171,6 +172,9 @@ func (c *Client) addOperationDeleteObjectMiddlewares(stack *middleware.Stack, op
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = swapWithCustomHTTPSignerMiddleware(stack, options); err != nil {
+		return err
+	}
 	if err = addOpDeleteObjectValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -222,13 +226,14 @@ func addDeleteObjectUpdateEndpoint(stack *middleware.Stack, options Options) err
 		Accessor: s3cust.UpdateEndpointParameterAccessor{
 			GetBucketFromInput: getDeleteObjectBucketMember,
 		},
-		UsePathStyle:            options.UsePathStyle,
-		UseAccelerate:           options.UseAccelerate,
-		SupportsAccelerate:      true,
-		TargetS3ObjectLambda:    false,
-		EndpointResolver:        options.EndpointResolver,
-		EndpointResolverOptions: options.EndpointOptions,
-		UseDualstack:            options.UseDualstack,
-		UseARNRegion:            options.UseARNRegion,
+		UsePathStyle:                   options.UsePathStyle,
+		UseAccelerate:                  options.UseAccelerate,
+		SupportsAccelerate:             true,
+		TargetS3ObjectLambda:           false,
+		EndpointResolver:               options.EndpointResolver,
+		EndpointResolverOptions:        options.EndpointOptions,
+		UseDualstack:                   options.UseDualstack,
+		UseARNRegion:                   options.UseARNRegion,
+		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})
 }

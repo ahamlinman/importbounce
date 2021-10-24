@@ -308,8 +308,8 @@ type UploadPartCopyOutput struct {
 	SSECustomerKeyMD5 *string
 
 	// If present, specifies the ID of the Amazon Web Services Key Management Service
-	// (Amazon Web Services KMS) symmetric customer managed customer master key (CMK)
-	// that was used for the object.
+	// (Amazon Web Services KMS) symmetric customer managed key that was used for the
+	// object.
 	SSEKMSKeyId *string
 
 	// The server-side encryption algorithm used when storing this object in Amazon S3
@@ -367,6 +367,9 @@ func (c *Client) addOperationUploadPartCopyMiddlewares(stack *middleware.Stack, 
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = swapWithCustomHTTPSignerMiddleware(stack, options); err != nil {
+		return err
+	}
 	if err = addOpUploadPartCopyValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -421,13 +424,14 @@ func addUploadPartCopyUpdateEndpoint(stack *middleware.Stack, options Options) e
 		Accessor: s3cust.UpdateEndpointParameterAccessor{
 			GetBucketFromInput: getUploadPartCopyBucketMember,
 		},
-		UsePathStyle:            options.UsePathStyle,
-		UseAccelerate:           options.UseAccelerate,
-		SupportsAccelerate:      true,
-		TargetS3ObjectLambda:    false,
-		EndpointResolver:        options.EndpointResolver,
-		EndpointResolverOptions: options.EndpointOptions,
-		UseDualstack:            options.UseDualstack,
-		UseARNRegion:            options.UseARNRegion,
+		UsePathStyle:                   options.UsePathStyle,
+		UseAccelerate:                  options.UseAccelerate,
+		SupportsAccelerate:             true,
+		TargetS3ObjectLambda:           false,
+		EndpointResolver:               options.EndpointResolver,
+		EndpointResolverOptions:        options.EndpointOptions,
+		UseDualstack:                   options.UseDualstack,
+		UseARNRegion:                   options.UseARNRegion,
+		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})
 }

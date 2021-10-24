@@ -231,8 +231,8 @@ type UploadPartOutput struct {
 	SSECustomerKeyMD5 *string
 
 	// If present, specifies the ID of the Amazon Web Services Key Management Service
-	// (Amazon Web Services KMS) symmetric customer managed customer master key (CMK)
-	// was used for the object.
+	// (Amazon Web Services KMS) symmetric customer managed key was used for the
+	// object.
 	SSEKMSKeyId *string
 
 	// The server-side encryption algorithm used when storing this object in Amazon S3
@@ -290,6 +290,9 @@ func (c *Client) addOperationUploadPartMiddlewares(stack *middleware.Stack, opti
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = swapWithCustomHTTPSignerMiddleware(stack, options); err != nil {
+		return err
+	}
 	if err = addOpUploadPartValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -306,6 +309,9 @@ func (c *Client) addOperationUploadPartMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = v4.AddContentSHA256HeaderMiddleware(stack); err != nil {
+		return err
+	}
+	if err = v4.UseDynamicPayloadSigningMiddleware(stack); err != nil {
 		return err
 	}
 	if err = disableAcceptEncodingGzip(stack); err != nil {
@@ -340,14 +346,15 @@ func addUploadPartUpdateEndpoint(stack *middleware.Stack, options Options) error
 		Accessor: s3cust.UpdateEndpointParameterAccessor{
 			GetBucketFromInput: getUploadPartBucketMember,
 		},
-		UsePathStyle:            options.UsePathStyle,
-		UseAccelerate:           options.UseAccelerate,
-		SupportsAccelerate:      true,
-		TargetS3ObjectLambda:    false,
-		EndpointResolver:        options.EndpointResolver,
-		EndpointResolverOptions: options.EndpointOptions,
-		UseDualstack:            options.UseDualstack,
-		UseARNRegion:            options.UseARNRegion,
+		UsePathStyle:                   options.UsePathStyle,
+		UseAccelerate:                  options.UseAccelerate,
+		SupportsAccelerate:             true,
+		TargetS3ObjectLambda:           false,
+		EndpointResolver:               options.EndpointResolver,
+		EndpointResolverOptions:        options.EndpointOptions,
+		UseDualstack:                   options.UseDualstack,
+		UseARNRegion:                   options.UseARNRegion,
+		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})
 }
 

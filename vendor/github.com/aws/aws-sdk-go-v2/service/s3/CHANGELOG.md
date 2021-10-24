@@ -1,3 +1,28 @@
+# v1.17.0 (2021-10-21)
+
+* **Feature**: Updated  to latest version
+* **Feature**: Updates S3 streaming operations - PutObject, UploadPart, WriteGetObjectResponse to use unsigned payload signing auth when TLS is enabled.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.1 (2021-10-11)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.0 (2021-09-17)
+
+* **Feature**: Updated API client and endpoints to latest revision.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.15.1 (2021-09-10)
+
+* No change notes available for this release.
+
+# v1.15.0 (2021-09-02)
+
+* **Feature**: API client updated
+* **Feature**: Add support for S3 Multi-Region Access Point ARNs.
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.14.0 (2021-08-27)
 
 * **Feature**: Updated API model to latest revision.
