@@ -18,9 +18,14 @@ Parameters:
     Type: String
     Description: >-
       If 'true', disable SSL when requesting the TOML config file from S3. This
-      significantly speeds up Lambda cold starts at the cost of reduced
-      security.
-    Default: 'false'
+      significantly speeds up Lambda cold starts and enables the smallest
+      possible container images, at the cost of reduced security. This must be
+      'true' when using the standard importbounce deployment script, which
+      produces a container image without any TLS roots.
+    Default: 'true'
+  ImageUri:
+    Description: The container image for the Lambda function to run.
+    Type: String
 
 Conditions:
   HasTracingEnabled: !Equals [!Ref TracingEnabled, 'true']
@@ -29,16 +34,18 @@ Conditions:
 Resources:
   ConfigBucket:
     Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
 
-  LambdaFunction:
+  Function:
     Type: AWS::Lambda::Function
     Properties:
       Description: Redirect server for custom Go import paths
-      Role: !GetAtt LambdaFunctionRole.Arn
-      Runtime: go1.x
-      Code: ./dist
-      Handler: importbounce
+      Role: !GetAtt FunctionRole.Arn
+      Architectures: [arm64]
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ImageUri
       Environment:
         Variables:
           GO_API_HOST: !Sub 'https://${DomainName}'
@@ -49,7 +56,7 @@ Resources:
       TracingConfig:
         Mode: !If [HasTracingEnabled, Active, PassThrough]
 
-  LambdaFunctionRole:
+  FunctionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -72,10 +79,10 @@ Resources:
                   - s3:GetObject
                 Resource: !Sub '${ConfigBucket.Arn}/*'
 
-  LambdaFunctionRestApiPermission:
+  FunctionRestApiPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt LambdaFunction.Arn
+      FunctionName: !GetAtt Function.Arn
       Principal: apigateway.amazonaws.com
       Action: lambda:invokeFunction
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*'
@@ -86,18 +93,6 @@ Resources:
       Description: Redirect server for custom Go import paths
       Name: !Ref AWS::StackName
 
-  RestApiRootMethod:
-    Type: AWS::ApiGateway::Method
-    Properties: &RestApiMethodProperties
-      RestApiId: !Ref RestApi
-      ResourceId: !GetAtt RestApi.RootResourceId
-      HttpMethod: ANY
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations'
-
   RestApiAnyPathResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -105,11 +100,29 @@ Resources:
       ParentId: !GetAtt RestApi.RootResourceId
       PathPart: '{proxy+}'
 
+  RestApiRootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !GetAtt RestApi.RootResourceId
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Function.Arn}/invocations'
+
   RestApiAnyPathMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      <<: *RestApiMethodProperties
+      RestApiId: !Ref RestApi
       ResourceId: !Ref RestApiAnyPathResource
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Function.Arn}/invocations'
 
   RestApiDeployment:
     Type: AWS::ApiGateway::Deployment
