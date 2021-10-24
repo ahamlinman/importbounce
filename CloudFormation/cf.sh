@@ -68,7 +68,7 @@ upload () (
   image="$repository:$tag"
 
   set -x
-  if ! skopeo list-tags "$repository" &>/dev/null; then
+  if ! skopeo list-tags docker://"$repository" &>/dev/null; then
     aws ecr get-login-password --region us-east-1 \
     | skopeo login --username AWS --password-stdin "$registry"
   fi
