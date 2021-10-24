@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 usage () {
   cat <<EOF
 cf.sh - Deploy importbounce to your AWS account using CloudFormation
 
-The AWS CLI must be installed and configured to use this script. For details
-about configuration, see the AWS Documentation:
-
-https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+You must install the AWS CLI and Skopeo to use this script.
 
 $0 build
   (Re)build the container image that will be deployed to AWS Lambda.
@@ -26,7 +22,7 @@ $0 deploy <stack name> [overrides...]
   cloudformation deploy". When deploying the stack for the first time, pass
   "DomainName=<domain>" to set the domain name of the redirector.
 
-$0 build-deploy <ECR repository> <stack name> [args...]
+$0 build-deploy <ECR repository> <stack name> [overrides...]
   Build, upload, and deploy all in one step.
 
 $0 help
