@@ -36,16 +36,15 @@ build () (
 
   set -x
 
-  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
+  CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
     go build -v \
     -ldflags='-s -w' \
     -o importbounce \
     ../cmd/importbounce
 
-  go run go.alexhamlin.co/zeroimage@latest \
-    -entrypoint importbounce \
-    -os "$os" -arch "$arch" \
-    -output importbounce.tar
+  go run go.alexhamlin.co/zeroimage@main \
+    -os $os -arch $arch \
+    importbounce
 )
 
 upload () (
@@ -69,7 +68,7 @@ upload () (
   image="$repository:$tag"
 
   set -x
-  if ! skopeo login --get-login "$registry" &>/dev/null; then
+  if ! skopeo list-tags "$repository" &>/dev/null; then
     aws ecr get-login-password --region us-east-1 \
     | skopeo login --username AWS --password-stdin "$registry"
   fi
