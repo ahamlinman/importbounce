@@ -124,7 +124,12 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Function.Arn}/invocations'
 
-  RestApiDeployment:
+  # TODO: CloudFormation is bad at handling API Gateway deployments. I took my
+  # redirector down for about an hour before I figured out that I needed to
+  # explicitly deploy the new method configurations set up by CloudFormation.
+  # Look into AWS::ApiGateway::ApiGatewayV2 which seems to have some better
+  # options for handling this.
+  RestApiDeployment20211023:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
       - RestApiRootMethod
@@ -136,7 +141,7 @@ Resources:
     Type: AWS::ApiGateway::Stage
     Properties:
       RestApiId: !Ref RestApi
-      DeploymentId: !Ref RestApiDeployment
+      DeploymentId: !Ref RestApiDeployment20211023
       TracingEnabled: !If [HasTracingEnabled, true, false]
 
   Certificate:
