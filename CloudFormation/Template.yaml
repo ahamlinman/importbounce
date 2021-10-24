@@ -143,6 +143,10 @@ Resources:
       RestApiId: !Ref RestApi
       DeploymentId: !Ref RestApiDeployment20211023
       TracingEnabled: !If [HasTracingEnabled, true, false]
+      MethodSettings:
+        - HttpMethod: '*'
+          ResourcePath: /*
+          LoggingLevel: INFO
 
   Certificate:
     Type: AWS::CertificateManager::Certificate
