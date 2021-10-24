@@ -34,6 +34,7 @@ Conditions:
 Resources:
   ConfigBucket:
     Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
 
   Function:
@@ -92,9 +93,16 @@ Resources:
       Description: Redirect server for custom Go import paths
       Name: !Ref AWS::StackName
 
+  RestApiAnyPathResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !GetAtt RestApi.RootResourceId
+      PathPart: '{proxy+}'
+
   RestApiRootMethod:
     Type: AWS::ApiGateway::Method
-    Properties: &RestApiMethodProperties
+    Properties:
       RestApiId: !Ref RestApi
       ResourceId: !GetAtt RestApi.RootResourceId
       HttpMethod: ANY
@@ -104,18 +112,17 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Function.Arn}/invocations'
 
-  RestApiAnyPathResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref RestApi
-      ParentId: !GetAtt RestApi.RootResourceId
-      PathPart: '{proxy+}'
-
   RestApiAnyPathMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      <<: *RestApiMethodProperties
+      RestApiId: !Ref RestApi
       ResourceId: !Ref RestApiAnyPathResource
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Function.Arn}/invocations'
 
   RestApiDeployment:
     Type: AWS::ApiGateway::Deployment
