@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# Because this stack generates a TLS certificate for use by CloudFront, it can
-# only be deployed to the us-east-1 region. This setting overrides the region
-# in the current AWS profile.
-export AWS_DEFAULT_REGION=us-east-1
+source .cf.local.bash
+
+binary_name="${binary_name:-$(basename "$go_src")}"
+tarball_name="${tarball_name:-$binary_name.tar}"
 
 usage () {
   cat <<EOF
-cf.sh - Deploy importbounce to your AWS account using CloudFormation
+cf.sh - Manage $project deployments with AWS CloudFormation
 
 You must install the AWS CLI and Skopeo to use this script.
 
@@ -21,11 +22,11 @@ $0 upload <ECR repository>
 
 $0 deploy <stack name> [overrides...]
   Deploy the latest version of the CloudFormation stack using the latest
-  container image, then print the URL for the deployed API.
+  container image, then print information about the deployed stack. Additional
+  arguments are optional "Key=Value" parameter overrides. This stack supports
+  the following overrides:
 
-  Additional arguments are passed to the "--parameter-overrides" option of "aws
-  cloudformation deploy". When deploying the stack for the first time, pass
-  "DomainName=<domain>" to set the domain name of the redirector.
+$params_usage
 
 $0 build-deploy <ECR repository> <stack name> [overrides...]
   Build, upload, and deploy all in one step.
@@ -52,12 +53,13 @@ build () (
   CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
     go build -v \
     -ldflags='-s -w' \
-    -o importbounce \
-    ../cmd/importbounce
+    -o "$binary_name" \
+    "$go_src"
 
   go run go.alexhamlin.co/zeroimage@main \
     -os $os -arch $arch \
-    importbounce
+    -output "$tarball_name" \
+    "$binary_name"
 )
 
 upload () (
@@ -65,7 +67,7 @@ upload () (
     echo "must install skopeo to upload container images" 1>&2
     return 1
   fi
-  if [ ! -s importbounce.tar ]; then
+  if [ ! -s "$tarball_name" ]; then
     echo "must build a container image before uploading" 1>&2
     return 1
   fi
@@ -85,7 +87,7 @@ upload () (
     | skopeo login --username AWS --password-stdin "$registry"
   fi
 
-  skopeo copy oci-archive:importbounce.tar docker://"$image"
+  skopeo copy oci-archive:"$tarball_name" docker://"$image"
   echo "$image" > latest-image.txt
 )
 
@@ -110,17 +112,8 @@ deploy () (
           "$@"
   )
 
-  echo -e "\\nUpload your importbounce configuration to:"
-  aws cloudformation describe-stacks \
-    --stack-name "$stack_name" \
-    --output text \
-    --query "Stacks[0].Outputs[?OutputKey=='ConfigS3URI'] | [0].OutputValue"
-
-  echo -e "\\nPoint your CNAME to:"
-  aws cloudformation describe-stacks \
-    --stack-name "$stack_name" \
-    --output text \
-    --query "Stacks[0].Outputs[?OutputKey=='ApiDomain'] | [0].OutputValue"
+  echo
+  print-stack-output "$stack_name"
 )
 
 build-deploy () {
