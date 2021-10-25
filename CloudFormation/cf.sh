@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Because this stack generates a TLS certificate for use by CloudFront, it can
+# only be deployed to the us-east-1 region. This setting overrides the region
+# in the current AWS profile.
+export AWS_DEFAULT_REGION=us-east-1
+
 usage () {
   cat <<EOF
 cf.sh - Deploy importbounce to your AWS account using CloudFormation
@@ -24,6 +29,14 @@ $0 deploy <stack name> [overrides...]
 
 $0 build-deploy <ECR repository> <stack name> [overrides...]
   Build, upload, and deploy all in one step.
+
+$0 current-image <stack name>
+  Display the container image that the provided CloudFormation stack is
+  currently configured to run.
+
+$0 clean-repository <ECR repository> <stack names...>
+  Remove all tags from the ECR repository that are not used by one of the listed
+  CloudFormation stacks.
 
 $0 help
   Print this message.
@@ -59,7 +72,6 @@ upload () (
 
   repository_name="$1"
   repository="$(aws ecr describe-repositories \
-    --region us-east-1 \
     --repository-names "$repository_name" \
     --query 'repositories[0].repositoryUri' \
     --output text)"
@@ -69,7 +81,7 @@ upload () (
 
   set -x
   if ! skopeo list-tags docker://"$repository" &>/dev/null; then
-    aws ecr get-login-password --region us-east-1 \
+    aws ecr get-login-password \
     | skopeo login --username AWS --password-stdin "$registry"
   fi
 
@@ -89,7 +101,6 @@ deploy () (
   (
     set -x
     aws cloudformation deploy \
-      --region us-east-1 \
       --template-file Template.yaml \
       --capabilities CAPABILITY_IAM \
       --stack-name "$stack_name" \
@@ -101,14 +112,12 @@ deploy () (
 
   echo -e "\\nUpload your importbounce configuration to:"
   aws cloudformation describe-stacks \
-    --region us-east-1 \
     --stack-name "$stack_name" \
     --output text \
     --query "Stacks[0].Outputs[?OutputKey=='ConfigS3URI'] | [0].OutputValue"
 
   echo -e "\\nPoint your CNAME to:"
   aws cloudformation describe-stacks \
-    --region us-east-1 \
     --stack-name "$stack_name" \
     --output text \
     --query "Stacks[0].Outputs[?OutputKey=='ApiDomain'] | [0].OutputValue"
@@ -123,6 +132,62 @@ build-deploy () {
   upload "$ecr_repository"
   deploy "$stack_name" "$@"
 }
+
+current-image () (
+  stack_name="$1"
+  aws cloudformation describe-stacks \
+    --stack-name "$stack_name" \
+    --output text \
+    --query "Stacks[0].Parameters[?ParameterKey=='ImageUri'].ParameterValue"
+)
+
+clean-repository () (
+  repository_name="$1"
+  shift
+
+  if [ "$#" -lt 1 ]; then
+    echo "must specify at least one stack name" 1>&2
+    return 1
+  fi
+
+  all_tags_list="$(
+    aws ecr describe-images --repository-name "$repository_name" \
+      --output text --query 'imageDetails[].imageTags[] | map(&[@], @)' \
+    | sort -n
+  )"
+
+  declare -a keep_tags
+  for stack in "$@"; do
+    image="$(current-image "$stack")"
+    keep_tags+=("${image##*:}")
+  done
+  keep_tags_list="$(printf '%s\n' "${keep_tags[@]}" | sort -nu)"
+
+  n_deleted_tags=0
+  delete_tags_cmd=(aws ecr batch-delete-image \
+    --repository-name "$repository_name" \
+    --image-ids)
+  while read -r tag; do
+    ((n_deleted_tags+=1))
+    delete_tags_cmd+=("imageTag=$tag")
+  done < <(comm -23 <(echo "$all_tags_list") <(echo "$keep_tags_list"))
+
+  if [ "$n_deleted_tags" -eq 0 ]; then
+    echo "Repository is clean enough; no tags to delete."
+    return
+  fi
+
+  echo "Will keep the following tags used by the listed stacks:"
+  echo "$keep_tags_list"
+  echo
+  echo "Will run the following command to delete all other tags:"
+  echo "${delete_tags_cmd[*]}"
+  echo
+  read -rp "Press Enter to run, or Ctrl-C to quit..."
+
+  set -x
+  "${delete_tags_cmd[@]}"
+)
 
 cmd="${1:-help}"
 [ "$#" -gt 0 ] && shift
@@ -139,6 +204,12 @@ case "$cmd" in
     ;;
   build-deploy)
     build-deploy "$@"
+    ;;
+  current-image)
+    current-image "$@"
+    ;;
+  clean-repository)
+    clean-repository "$@"
     ;;
   help)
     usage
