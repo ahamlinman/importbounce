@@ -1,3 +1,11 @@
+# v1.19.1 (2021-11-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.19.0 (2021-11-12)
+
+* **Feature**: Waiters now have a `WaitForOutput` method, which can be used to retrieve the output of the successful wait operation. Thank you to [Andrew Haines](https://github.com/haines) for contributing this feature.
+
 # v1.18.0 (2021-11-06)
 
 * **Feature**: Support has been added for the SelectObjectContent API.
