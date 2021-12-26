@@ -257,6 +257,16 @@ func (Event) Values() []Event {
 		"s3:Replication:OperationNotTracked",
 		"s3:Replication:OperationMissedThreshold",
 		"s3:Replication:OperationReplicatedAfterThreshold",
+		"s3:ObjectRestore:Delete",
+		"s3:LifecycleTransition",
+		"s3:IntelligentTiering",
+		"s3:ObjectAcl:Put",
+		"s3:LifecycleExpiration:*",
+		"s3:LifecycleExpiration:Delete",
+		"s3:LifecycleExpiration:DeleteMarkerCreated",
+		"s3:ObjectTagging:*",
+		"s3:ObjectTagging:Put",
+		"s3:ObjectTagging:Delete",
 	}
 }
 
@@ -676,6 +686,7 @@ type ObjectOwnership string
 const (
 	ObjectOwnershipBucketOwnerPreferred ObjectOwnership = "BucketOwnerPreferred"
 	ObjectOwnershipObjectWriter         ObjectOwnership = "ObjectWriter"
+	ObjectOwnershipBucketOwnerEnforced  ObjectOwnership = "BucketOwnerEnforced"
 )
 
 // Values returns all known values for ObjectOwnership. Note that this can be
@@ -685,6 +696,7 @@ func (ObjectOwnership) Values() []ObjectOwnership {
 	return []ObjectOwnership{
 		"BucketOwnerPreferred",
 		"ObjectWriter",
+		"BucketOwnerEnforced",
 	}
 }
 
@@ -700,6 +712,7 @@ const (
 	ObjectStorageClassIntelligentTiering ObjectStorageClass = "INTELLIGENT_TIERING"
 	ObjectStorageClassDeepArchive        ObjectStorageClass = "DEEP_ARCHIVE"
 	ObjectStorageClassOutposts           ObjectStorageClass = "OUTPOSTS"
+	ObjectStorageClassGlacierIr          ObjectStorageClass = "GLACIER_IR"
 )
 
 // Values returns all known values for ObjectStorageClass. Note that this can be
@@ -715,6 +728,7 @@ func (ObjectStorageClass) Values() []ObjectStorageClass {
 		"INTELLIGENT_TIERING",
 		"DEEP_ARCHIVE",
 		"OUTPOSTS",
+		"GLACIER_IR",
 	}
 }
 
@@ -1000,6 +1014,7 @@ const (
 	StorageClassGlacier            StorageClass = "GLACIER"
 	StorageClassDeepArchive        StorageClass = "DEEP_ARCHIVE"
 	StorageClassOutposts           StorageClass = "OUTPOSTS"
+	StorageClassGlacierIr          StorageClass = "GLACIER_IR"
 )
 
 // Values returns all known values for StorageClass. Note that this can be expanded
@@ -1015,6 +1030,7 @@ func (StorageClass) Values() []StorageClass {
 		"GLACIER",
 		"DEEP_ARCHIVE",
 		"OUTPOSTS",
+		"GLACIER_IR",
 	}
 }
 
@@ -1082,6 +1098,7 @@ const (
 	TransitionStorageClassOnezoneIa          TransitionStorageClass = "ONEZONE_IA"
 	TransitionStorageClassIntelligentTiering TransitionStorageClass = "INTELLIGENT_TIERING"
 	TransitionStorageClassDeepArchive        TransitionStorageClass = "DEEP_ARCHIVE"
+	TransitionStorageClassGlacierIr          TransitionStorageClass = "GLACIER_IR"
 )
 
 // Values returns all known values for TransitionStorageClass. Note that this can
@@ -1094,6 +1111,7 @@ func (TransitionStorageClass) Values() []TransitionStorageClass {
 		"ONEZONE_IA",
 		"INTELLIGENT_TIERING",
 		"DEEP_ARCHIVE",
+		"GLACIER_IR",
 	}
 }
 
