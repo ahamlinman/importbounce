@@ -13,6 +13,7 @@ import (
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	internalConfig "github.com/aws/aws-sdk-go-v2/internal/configsources"
 	acceptencodingcust "github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding"
+	internalChecksum "github.com/aws/aws-sdk-go-v2/service/internal/checksum"
 	presignedurlcust "github.com/aws/aws-sdk-go-v2/service/internal/presigned-url"
 	"github.com/aws/aws-sdk-go-v2/service/internal/s3shared"
 	s3sharedconfig "github.com/aws/aws-sdk-go-v2/service/internal/s3shared/config"
@@ -45,13 +46,13 @@ func New(options Options, optFns ...func(*Options)) *Client {
 
 	resolveDefaultLogger(&options)
 
+	setResolvedDefaultsMode(&options)
+
 	resolveRetryer(&options)
 
 	resolveHTTPClient(&options)
 
 	resolveHTTPSignerV4(&options)
-
-	setResolvedDefaultsMode(&options)
 
 	resolveDefaultEndpointConfiguration(&options)
 
@@ -104,12 +105,32 @@ type Options struct {
 	// The region to send requests to. (Required)
 	Region string
 
+	// RetryMaxAttempts specifies the maximum number attempts an API client will call
+	// an operation that fails with a retryable error. A value of 0 is ignored, and
+	// will not be used to configure the API client created default retryer, or modify
+	// per operation call's retry max attempts. When creating a new API Clients this
+	// member will only be used if the Retryer Options member is nil. This value will
+	// be ignored if Retryer is not nil. If specified in an operation call's functional
+	// options with a value that is different than the constructed client's Options,
+	// the Client's Retryer will be wrapped to use the operation's specific
+	// RetryMaxAttempts value.
+	RetryMaxAttempts int
+
+	// RetryMode specifies the retry mode the API client will be created with, if
+	// Retryer option is not also specified. When creating a new API Clients this
+	// member will only be used if the Retryer Options member is nil. This value will
+	// be ignored if Retryer is not nil. Currently does not support per operation call
+	// overrides, may in the future.
+	RetryMode aws.RetryMode
+
 	// Retryer guides how HTTP requests should be retried in case of recoverable
-	// failures. When nil the API client will use a default retryer.
+	// failures. When nil the API client will use a default retryer. The kind of
+	// default retry created by the API client can be changed with the RetryMode
+	// option.
 	Retryer aws.Retryer
 
 	// The RuntimeEnvironment configuration, only populated if the DefaultsMode is set
-	// to AutoDefaultsMode and is initialized using config.LoadDefaultConfig. You
+	// to DefaultsModeAuto and is initialized using config.LoadDefaultConfig. You
 	// should not populate this structure programmatically, or rely on the values here
 	// within your applications.
 	RuntimeEnvironment aws.RuntimeEnvironment
@@ -141,15 +162,14 @@ type Options struct {
 	httpSignerV4a httpSignerV4a
 
 	// The initial DefaultsMode used when the client options were constructed. If the
-	// DefaultsMode was set to aws.AutoDefaultsMode this will store what the resolved
-	// value was at that point in time.
+	// DefaultsMode was set to aws.DefaultsModeAuto this will store what the resolved
+	// value was at that point in time. Currently does not support per operation call
+	// overrides, may in the future.
 	resolvedDefaultsMode aws.DefaultsMode
 
 	// The HTTP client to invoke API calls with. Defaults to client's default HTTP
 	// implementation if nil.
 	HTTPClient HTTPClient
-
-	clientInitializedOptions map[struct{}]interface{}
 }
 
 // WithAPIOptions returns a functional option for setting the Client's APIOptions
@@ -178,11 +198,6 @@ func (o Options) Copy() Options {
 	to.APIOptions = make([]func(*middleware.Stack) error, len(o.APIOptions))
 	copy(to.APIOptions, o.APIOptions)
 
-	to.clientInitializedOptions = make(map[struct{}]interface{}, len(o.clientInitializedOptions))
-	for k, v := range o.clientInitializedOptions {
-		to.clientInitializedOptions[k] = v
-	}
-
 	return to
 }
 func (c *Client) invokeOperation(ctx context.Context, opID string, params interface{}, optFns []func(*Options), stackFns ...func(*middleware.Stack, Options) error) (result interface{}, metadata middleware.Metadata, err error) {
@@ -194,6 +209,8 @@ func (c *Client) invokeOperation(ctx context.Context, opID string, params interf
 	}
 
 	setSafeEventStreamClientLogMode(&options, opID)
+
+	finalizeRetryMaxAttemptOptions(&options, *c)
 
 	finalizeClientEndpointResolverOptions(&options)
 
@@ -236,6 +253,21 @@ func addSetLoggerMiddleware(stack *middleware.Stack, o Options) error {
 	return middleware.AddSetLoggerMiddleware(stack, o.Logger)
 }
 
+func setResolvedDefaultsMode(o *Options) {
+	if len(o.resolvedDefaultsMode) > 0 {
+		return
+	}
+
+	var mode aws.DefaultsMode
+	mode.SetFromString(string(o.DefaultsMode))
+
+	if mode == aws.DefaultsModeAuto {
+		mode = defaults.ResolveDefaultsModeAuto(o.Region, o.RuntimeEnvironment)
+	}
+
+	o.resolvedDefaultsMode = mode
+}
+
 // NewFromConfig returns a new client from the provided config.
 func NewFromConfig(cfg aws.Config, optFns ...func(*Options)) *Client {
 	opts := Options{
@@ -249,6 +281,8 @@ func NewFromConfig(cfg aws.Config, optFns ...func(*Options)) *Client {
 		ClientLogMode:      cfg.ClientLogMode,
 	}
 	resolveAWSRetryerProvider(cfg, &opts)
+	resolveAWSRetryMaxAttempts(cfg, &opts)
+	resolveAWSRetryMode(cfg, &opts)
 	resolveAWSEndpointResolver(cfg, &opts)
 	resolveUseARNRegion(cfg, &opts)
 	resolveUseDualStackEndpoint(cfg, &opts)
@@ -269,18 +303,8 @@ func resolveHTTPClient(o *Options) {
 		buildable = awshttp.NewBuildableClient()
 	}
 
-	var mode aws.DefaultsMode
-	if ok := mode.SetFromString(string(o.DefaultsMode)); !ok {
-		panic(fmt.Errorf("unsupported defaults mode constant %v", mode))
-	}
-
-	if mode == aws.DefaultsModeAuto {
-		mode = defaults.ResolveDefaultsModeAuto(o.Region, o.RuntimeEnvironment)
-	}
-
-	if mode != aws.DefaultsModeLegacy {
-		modeConfig, _ := defaults.GetModeConfiguration(mode)
-
+	modeConfig, err := defaults.GetModeConfiguration(o.resolvedDefaultsMode)
+	if err == nil {
 		buildable = buildable.WithDialerOptions(func(dialer *net.Dialer) {
 			if dialerTimeout, ok := modeConfig.GetConnectTimeout(); ok {
 				dialer.Timeout = dialerTimeout
@@ -301,7 +325,37 @@ func resolveRetryer(o *Options) {
 	if o.Retryer != nil {
 		return
 	}
-	o.Retryer = retry.NewStandard()
+
+	if len(o.RetryMode) == 0 {
+		modeConfig, err := defaults.GetModeConfiguration(o.resolvedDefaultsMode)
+		if err == nil {
+			o.RetryMode = modeConfig.RetryMode
+		}
+	}
+	if len(o.RetryMode) == 0 {
+		o.RetryMode = aws.RetryModeStandard
+	}
+
+	var standardOptions []func(*retry.StandardOptions)
+	if v := o.RetryMaxAttempts; v != 0 {
+		standardOptions = append(standardOptions, func(so *retry.StandardOptions) {
+			so.MaxAttempts = v
+		})
+	}
+
+	switch o.RetryMode {
+	case aws.RetryModeAdaptive:
+		var adaptiveOptions []func(*retry.AdaptiveModeOptions)
+		if len(standardOptions) != 0 {
+			adaptiveOptions = append(adaptiveOptions, func(ao *retry.AdaptiveModeOptions) {
+				ao.StandardOptions = append(ao.StandardOptions, standardOptions...)
+			})
+		}
+		o.Retryer = retry.NewAdaptiveMode(adaptiveOptions...)
+
+	default:
+		o.Retryer = retry.NewStandard(standardOptions...)
+	}
 }
 
 func resolveAWSRetryerProvider(cfg aws.Config, o *Options) {
@@ -309,6 +363,27 @@ func resolveAWSRetryerProvider(cfg aws.Config, o *Options) {
 		return
 	}
 	o.Retryer = cfg.Retryer()
+}
+
+func resolveAWSRetryMode(cfg aws.Config, o *Options) {
+	if len(cfg.RetryMode) == 0 {
+		return
+	}
+	o.RetryMode = cfg.RetryMode
+}
+func resolveAWSRetryMaxAttempts(cfg aws.Config, o *Options) {
+	if cfg.RetryMaxAttempts == 0 {
+		return
+	}
+	o.RetryMaxAttempts = cfg.RetryMaxAttempts
+}
+
+func finalizeRetryMaxAttemptOptions(o *Options, client Client) {
+	if v := o.RetryMaxAttempts; v == 0 || v == client.options.RetryMaxAttempts {
+		return
+	}
+
+	o.Retryer = retry.AddWithMaxAttempts(o.Retryer, o.RetryMaxAttempts)
 }
 
 func resolveAWSEndpointResolver(cfg aws.Config, o *Options) {
@@ -348,21 +423,6 @@ func newDefaultV4Signer(o Options) *v4.Signer {
 		so.LogSigning = o.ClientLogMode.IsSigning()
 		so.DisableURIPathEscaping = true
 	})
-}
-
-func setResolvedDefaultsMode(o *Options) {
-	if len(o.resolvedDefaultsMode) > 0 {
-		return
-	}
-
-	var mode aws.DefaultsMode
-	mode.SetFromString(string(o.DefaultsMode))
-
-	if mode == aws.DefaultsModeAuto {
-		mode = defaults.ResolveDefaultsModeAuto(o.Region, o.RuntimeEnvironment)
-	}
-
-	o.resolvedDefaultsMode = mode
 }
 
 func addRetryMiddlewares(stack *middleware.Stack, o Options) error {
@@ -465,6 +525,53 @@ func newDefaultV4aSigner(o Options) *v4a.Signer {
 
 func addMetadataRetrieverMiddleware(stack *middleware.Stack) error {
 	return s3shared.AddMetadataRetrieverMiddleware(stack)
+}
+
+// ComputedInputChecksumsMetadata provides information about the algorithms used to
+// compute the checksum(s) of the input payload.
+type ComputedInputChecksumsMetadata struct {
+	// ComputedChecksums is a map of algorithm name to checksum value of the computed
+	// input payload's checksums.
+	ComputedChecksums map[string]string
+}
+
+// GetComputedInputChecksumsMetadata retrieves from the result metadata the map of
+// algorithms and input payload checksums values.
+func GetComputedInputChecksumsMetadata(m middleware.Metadata) (ComputedInputChecksumsMetadata, bool) {
+	values, ok := internalChecksum.GetComputedInputChecksums(m)
+	if !ok {
+		return ComputedInputChecksumsMetadata{}, false
+	}
+	return ComputedInputChecksumsMetadata{
+		ComputedChecksums: values,
+	}, true
+
+}
+
+// ChecksumValidationMetadata contains metadata such as the checksum algorithm used
+// for data integrity validation.
+type ChecksumValidationMetadata struct {
+	// AlgorithmsUsed is the set of the checksum algorithms used to validate the
+	// response payload. The response payload must be completely read in order for the
+	// checksum validation to be performed. An error is returned by the operation
+	// output's response io.ReadCloser if the computed checksums are invalid.
+	AlgorithmsUsed []string
+}
+
+// GetChecksumValidationMetadata returns the set of algorithms that will be used to
+// validate the response payload with. The response payload must be completely read
+// in order for the checksum validation to be performed. An error is returned by
+// the operation output's response io.ReadCloser if the computed checksums are
+// invalid. Returns false if no checksum algorithm used metadata was found.
+func GetChecksumValidationMetadata(m middleware.Metadata) (ChecksumValidationMetadata, bool) {
+	values, ok := internalChecksum.GetOutputValidationAlgorithmsUsed(m)
+	if !ok {
+		return ChecksumValidationMetadata{}, false
+	}
+	return ChecksumValidationMetadata{
+		AlgorithmsUsed: append(make([]string, 0, len(values)), values...),
+	}, true
+
 }
 
 // nopGetBucketAccessor is no-op accessor for operation that don't support bucket
