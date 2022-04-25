@@ -1,3 +1,23 @@
+# v1.26.5 (2022-04-12)
+
+* **Bug Fix**: Fixes an issue that caused the unexported constructor function names for EventStream types to be swapped for the event reader and writer respectivly.
+
+# v1.26.4 (2022-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.3 (2022-03-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.2 (2022-03-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.1 (2022-03-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.26.0 (2022-03-08)
 
 * **Feature**: Updated `github.com/aws/smithy-go` to latest version
