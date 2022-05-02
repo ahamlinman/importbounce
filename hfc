@@ -1,0 +1,5 @@
+#!/bin/sh
+# See https://github.com/ahamlinman/hfc
+export AWS_DEFAULT_REGION=us-east-1
+set -x
+exec go run go.alexhamlin.co/hfc@main "$@"

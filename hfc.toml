@@ -1,0 +1,9 @@
+[project]
+name = "importbounce"
+
+[build]
+path = "./cmd/importbounce"
+
+[template]
+path = "CloudFormation.yaml"
+capabilities = ["CAPABILITY_IAM"]
