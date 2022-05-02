@@ -1,0 +1,15 @@
+# Create an ECR repository in us-east-1 and set its name here.
+[repository]
+name = "importbounce"
+
+# Define the names and parameters of any CloudFormation stacks you want to
+# deploy from the template. It's recommended that you set up at least one test
+# deployment in addition to any production deployments you choose to maintain.
+
+[[stacks]]
+name = "ImportBounceTest"
+parameters = { DomainName = "go-test.example.com" }
+
+[[stacks]]
+name = "ImportBounceProduction"
+parameters = { DomainName = "go.example.com" }

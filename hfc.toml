@@ -5,5 +5,5 @@ name = "importbounce"
 path = "./cmd/importbounce"
 
 [template]
-path = "CloudFormation/Template.yaml"
+path = "CloudFormation.yaml"
 capabilities = ["CAPABILITY_IAM"]

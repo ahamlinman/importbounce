@@ -24,21 +24,32 @@ using one of the following schemes:
 
 ## Deployment
 
-The `CloudFormation/` directory includes an AWS CloudFormation template
-(`Template.yaml`) and helper script (`cf.sh`) that deploys importbounce as an
-AWS Lambda function in the `us-east-1` region serving a single custom domain
-name through CloudFront. `cd` into that directory and run `./cf.sh help` for
-more information.
+This repository includes a CloudFormation template (`CloudFormation.yaml`) and
+a helper script (`hfc`) to deploy importbounce as an AWS Lambda function in the
+`us-east-1` region serving a single custom domain name through CloudFront.
 
-Before the stack can be fully deployed for the first time, you will need to go
-into the AWS Certificate Manager and follow the directions to validate the TLS
-certificate generated for your domain. After the initial deployment, you will
-need to upload your TOML configuration to the S3 bucket created by
-CloudFormation, then set up a CNAME to the CloudFront domain. `cf.sh` will
-print more information about this after you deploy the stack.
+To prepare the deployment:
+
+1. Install and configure the AWS CLI, and ensure that it has access to ECR and
+   CloudFormation.
+2. Create an AWS ECR repository in the us-east-1 region.
+3. Copy `hfc.local.example.toml` to `hfc.local.toml`, and update all the values
+   in the file to match your desired configuration.
+4. Run `./hfc build-deploy [stack]` to start deploying your first stack, **but
+   see the directions below to complete the initial deployment**. To deploy
+   additional stacks using the same build, run `./hfc deploy [stack]`.
+
+While the initial deployment of the stack is in progress, you will need to go
+into AWS Certificate Manager manually and follow the directions to validate the
+TLS certificate generated for your domain. After the initial deployment
+finishes, you will need to upload your TOML configuration to the S3 bucket
+created by CloudFormation, then set up a CNAME to the CloudFront domain with
+your DNS host. `hfc` will print the S3 path and CloudFront domain after every
+successful stack deployment.
 
 Note that the template can only be deployed to `us-east-1`, as CloudFront
-requires the generated TLS certificate to be there.
+requires the generated TLS certificate to be there. The `hfc` helper script
+will automatically override the region for all AWS CLI commands.
 
 If you don't wish to use the serverless AWS Lambda deployment, you can run
 importbounce as a standard HTTP server by passing the `-http` flag with a
