@@ -1,3 +1,11 @@
+# v1.26.9 (2022-05-06)
+
+* No change notes available for this release.
+
+# v1.26.8 (2022-05-03)
+
+* **Documentation**: Documentation only update for doc bug fixes for the S3 API docs.
+
 # v1.26.7 (2022-04-27)
 
 * **Dependency Update**: Updated to the latest SDK module versions
