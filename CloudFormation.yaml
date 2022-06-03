@@ -79,74 +79,19 @@ Resources:
                   - s3:GetObject
                 Resource: !Sub '${ConfigBucket.Arn}/*'
 
-  FunctionRestApiPermission:
+  FunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt Function.Arn
+      AuthType: NONE
+
+  FunctionUrlPermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !GetAtt Function.Arn
-      Principal: apigateway.amazonaws.com
-      Action: lambda:InvokeFunction
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*'
-
-  RestApi:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Description: Redirect server for custom Go import paths
-      Name: !Ref AWS::StackName
-
-  RestApiAnyPathResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref RestApi
-      ParentId: !GetAtt RestApi.RootResourceId
-      PathPart: '{proxy+}'
-
-  RestApiRootMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref RestApi
-      ResourceId: !GetAtt RestApi.RootResourceId
-      HttpMethod: ANY
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Function.Arn}/invocations'
-
-  RestApiAnyPathMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref RestApi
-      ResourceId: !Ref RestApiAnyPathResource
-      HttpMethod: ANY
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Function.Arn}/invocations'
-
-  # TODO: CloudFormation is bad at handling API Gateway deployments. I took my
-  # redirector down for about an hour before I figured out that I needed to
-  # explicitly deploy the new method configurations set up by CloudFormation.
-  # Look into AWS::ApiGateway::ApiGatewayV2 which seems to have some better
-  # options for handling this.
-  RestApiDeployment20211023:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn:
-      - RestApiRootMethod
-      - RestApiAnyPathMethod
-    Properties:
-      RestApiId: !Ref RestApi
-
-  RestApiStage:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      RestApiId: !Ref RestApi
-      DeploymentId: !Ref RestApiDeployment20211023
-      TracingEnabled: !If [HasTracingEnabled, true, false]
-      MethodSettings:
-        - HttpMethod: '*'
-          ResourcePath: /*
-          LoggingLevel: INFO
+      Principal: '*'  # TODO: Can we limit this to CloudFront?
+      Action: lambda:InvokeFunctionUrl
+      FunctionUrlAuthType: NONE
 
   Certificate:
     Type: AWS::CertificateManager::Certificate
@@ -163,8 +108,7 @@ Resources:
           - !Ref DomainName
         Origins:
           - Id: RestApi
-            DomainName: !Sub '${RestApi}.execute-api.${AWS::Region}.amazonaws.com'
-            OriginPath: !Sub '/${RestApiStage}'
+            DomainName: !GetAtt FunctionUrl.FunctionUrl
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
         DefaultCacheBehavior:
