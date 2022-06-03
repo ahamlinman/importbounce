@@ -104,6 +104,7 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
+        HttpVersion: http2
         Aliases:
           - !Ref DomainName
         Origins:
