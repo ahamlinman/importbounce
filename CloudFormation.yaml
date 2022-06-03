@@ -108,7 +108,10 @@ Resources:
           - !Ref DomainName
         Origins:
           - Id: RestApi
-            DomainName: !GetAtt FunctionUrl.FunctionUrl
+            # The function URL is a proper https:// URL, but for CloudFront we
+            # need to limit this to just the origin hostname. This is about the
+            # best we can do with the currently available intrinsic functions.
+            DomainName: !Select [2, !Split ['/', !GetAtt FunctionUrl.FunctionUrl]]
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
         DefaultCacheBehavior:
