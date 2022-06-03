@@ -89,7 +89,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !GetAtt Function.Arn
-      Principal: '*'  # TODO: Can we limit this to CloudFront?
+      Principal: '*'
       Action: lambda:InvokeFunctionUrl
       FunctionUrlAuthType: NONE
 
