@@ -107,7 +107,7 @@ Resources:
         Aliases:
           - !Ref DomainName
         Origins:
-          - Id: RestApi
+          - Id: Function
             # The function URL is a proper https:// URL, but for CloudFront we
             # need to limit this to just the origin hostname. This is about the
             # best we can do with the currently available intrinsic functions.
@@ -115,7 +115,7 @@ Resources:
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
         DefaultCacheBehavior:
-          TargetOriginId: RestApi
+          TargetOriginId: Function
           ForwardedValues:
             QueryString: true
           ViewerProtocolPolicy: redirect-to-https
