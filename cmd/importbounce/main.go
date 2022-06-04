@@ -41,5 +41,5 @@ func main() {
 	}
 
 	log.Printf("starting AWS Lambda listener")
-	lambda.Start(httpadapter.New(bouncer).ProxyWithContext)
+	lambda.Start(httpadapter.NewV2(bouncer).ProxyWithContext)
 }

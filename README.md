@@ -26,7 +26,7 @@ using one of the following schemes:
 
 This repository includes a CloudFormation template (`CloudFormation.yaml`) and
 a helper script (`hfc`) to deploy importbounce as an AWS Lambda function in the
-`us-east-1` region serving a single custom domain name through CloudFront.
+us-east-1 region serving a single custom domain name through CloudFront.
 
 To prepare the deployment:
 
@@ -39,15 +39,31 @@ To prepare the deployment:
    see the directions below to complete the initial deployment**. To deploy
    additional stacks using the same build, run `./hfc deploy [stack]`.
 
-While the initial deployment of the stack is in progress, you will need to go
-into AWS Certificate Manager manually and follow the directions to validate the
-TLS certificate generated for your domain. After the initial deployment
-finishes, you will need to upload your TOML configuration to the S3 bucket
-created by CloudFormation, then set up a CNAME to the CloudFront domain with
-your DNS host. `hfc` will print the S3 path and CloudFront domain after every
-successful stack deployment.
+While the initial deployment of the stack is in progress, you will need to
+manually add DNS records to your domain to validate your ownership of it. To do
+this:
 
-Note that the template can only be deployed to `us-east-1`, as CloudFront
+1. Go to [AWS Certificate Manager][acm] in the AWS console, and look at the
+   list of certificates for the us-east-1 region.
+2. Find the pending certificate for the new stack, and click on its ID.
+3. In the "Domains" box, look for the "CNAME name" and "CNAME value" columns.
+4. Create a new CNAME record with your DNS host so that the "CNAME name"
+   resolves to the "CNAME value."
+
+Once you've created the CNAME record for validation, the certificate should be
+issued and the stack deployment should proceed within a few minutes. Don't
+delete the CNAME, as AWS will continue to look for it every time it renews the
+certificate. Future stack deployments won't require any further interaction
+from you.
+
+[acm]: https://us-east-1.console.aws.amazon.com/acm/home?region=us-east-1#/certificates/list
+
+After the initial deployment finishes, you will need to upload your TOML
+configuration to the S3 bucket created by CloudFormation, then set up a CNAME
+to the CloudFront domain with your DNS host. `hfc` will print the S3 path and
+CloudFront domain after every successful stack deployment.
+
+Note that the template can only be deployed to us-east-1, as CloudFront
 requires the generated TLS certificate to be there. The `hfc` helper script
 will automatically override the region for all AWS CLI commands.
 
