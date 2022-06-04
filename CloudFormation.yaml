@@ -101,6 +101,8 @@ Resources:
 
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - FunctionUrlPermission
     Properties:
       DistributionConfig:
         Enabled: true
