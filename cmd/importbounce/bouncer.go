@@ -60,9 +60,9 @@ func (b *Bouncer) loadConfig(ctx context.Context) (config, error) {
 	defer r.Close()
 
 	var c config
-	_, err = toml.DecodeReader(r, &c)
+	_, err = toml.NewDecoder(r).Decode(&c)
 	if err != nil {
-		err = fmt.Errorf("decoding config: %w", err)
+		return config{}, fmt.Errorf("decoding config: %w", err)
 	}
 	return c, err
 }
