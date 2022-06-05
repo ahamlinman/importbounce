@@ -119,13 +119,33 @@ Resources:
               OriginProtocolPolicy: https-only
         DefaultCacheBehavior:
           TargetOriginId: Function
-          ForwardedValues:
-            QueryString: true
+          CachePolicyId: !Ref CloudFrontDefaultCachePolicy
           ViewerProtocolPolicy: redirect-to-https
-          DefaultTTL: 0
         ViewerCertificate:
           AcmCertificateArn: !Ref Certificate
           SslSupportMethod: sni-only
+
+  CloudFrontDefaultCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub '${AWS::StackName}-Default'
+        Comment: !Sub 'Default cache policy for ${AWS::StackName}'
+        DefaultTTL: 0
+        MinTTL:  0
+        MaxTTL: 31536000
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: whitelist # TODO: CloudFront does not yet support a better term.
+            Headers:
+              - Host
+          QueryStringsConfig:
+            QueryStringBehavior: whitelist # TODO: CloudFront does not yet support a better term.
+            QueryStrings:
+              - go-get
+          EnableAcceptEncodingGzip: false
 
 Outputs:
   ConfigS3URI:
