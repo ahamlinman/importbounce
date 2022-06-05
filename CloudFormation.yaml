@@ -8,21 +8,23 @@ Parameters:
     Description: Domain name for the redirector to host.
   ConfigFilePath:
     Type: String
-    Description: Path to the TOML config file in the S3 bucket.
     Default: importbounce.toml
+    Description: Path to the TOML config file in the S3 bucket.
   TracingEnabled:
     Type: String
-    Description: If 'true', turn on X-Ray tracing for all supported resources.
     Default: 'true'
+    Description: If 'true', turn on X-Ray tracing for all supported resources.
   ConfigFileNoSSL:
     Type: String
-    Description: >-
-      If 'true', disable SSL when requesting the TOML config file from S3. This
-      significantly speeds up Lambda cold starts and enables the smallest
-      possible container images, at the cost of reduced security. This must be
-      'true' when using the standard importbounce deployment script, which
-      produces a container image without any TLS roots.
     Default: 'true'
+    Description: >-
+      If 'true', request the TOML config file from S3 without HTTPS. This speeds
+      up Lambda cold starts and enables container images that omit TLS roots,
+      like the image built by the standard importbounce deployment script.
+      Mitigating factors for the reduced security include the fact that the S3
+      request should not leave AWS internal networks when importbounce runs in
+      AWS Lambda, and that the Go checksum database is likely to detect
+      temporary spoofing of the config to point at modified code.
   ImageUri:
     Description: The container image for the Lambda function to run.
     Type: String
