@@ -138,9 +138,7 @@ Resources:
           CookiesConfig:
             CookieBehavior: none
           HeadersConfig:
-            HeaderBehavior: whitelist # TODO: CloudFront does not yet support a better term.
-            Headers:
-              - Host
+            HeaderBehavior: none
           QueryStringsConfig:
             QueryStringBehavior: whitelist # TODO: CloudFront does not yet support a better term.
             QueryStrings:
