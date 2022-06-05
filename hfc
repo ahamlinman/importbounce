@@ -2,4 +2,4 @@
 # See https://go.alexhamlin.co/hfc
 export AWS_DEFAULT_REGION=us-east-1
 set -x
-exec go run go.alexhamlin.co/hfc@main "$@"
+exec go run go.alexhamlin.co/hfc@latest "$@"
