@@ -25,8 +25,11 @@ Parameters:
       request should not leave AWS internal networks when importbounce runs in
       AWS Lambda, and that the Go checksum database is likely to detect
       temporary spoofing of the config to point at modified code.
-  ImageUri:
-    Description: The container image for the Lambda function to run.
+  CodeS3Bucket:
+    Description: The S3 bucket containing the Lambda deployment package.
+    Type: String
+  CodeS3Key:
+    Description: The S3 key of the Lambda deployment package.
     Type: String
 
 Conditions:
@@ -39,15 +42,17 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
 
-  Function:
+  OriginFunction:
     Type: AWS::Lambda::Function
     Properties:
       Description: Redirect server for custom Go import paths
-      Role: !GetAtt FunctionRole.Arn
+      Role: !GetAtt OriginFunctionRole.Arn
+      Runtime: provided.al2
       Architectures: [arm64]
-      PackageType: Image
       Code:
-        ImageUri: !Ref ImageUri
+        S3Bucket: !Ref CodeS3Bucket
+        S3Key: !Ref CodeS3Key
+      Handler: bootstrap
       Environment:
         Variables:
           GO_API_HOST: !Sub 'https://${DomainName}'
@@ -58,7 +63,7 @@ Resources:
       TracingConfig:
         Mode: !If [HasTracingEnabled, Active, PassThrough]
 
-  FunctionRole:
+  OriginFunctionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -81,16 +86,16 @@ Resources:
                   - s3:GetObject
                 Resource: !Sub '${ConfigBucket.Arn}/*'
 
-  FunctionUrl:
+  OriginFunctionUrl:
     Type: AWS::Lambda::Url
     Properties:
-      TargetFunctionArn: !GetAtt Function.Arn
+      TargetFunctionArn: !GetAtt OriginFunction.Arn
       AuthType: NONE
 
-  FunctionUrlPermission:
+  OriginFunctionUrlPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt Function.Arn
+      FunctionName: !GetAtt OriginFunction.Arn
       Principal: '*'
       Action: lambda:InvokeFunctionUrl
       FunctionUrlAuthType: NONE
@@ -104,7 +109,7 @@ Resources:
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     DependsOn:
-      - FunctionUrlPermission
+      - OriginFunctionUrlPermission
     Properties:
       DistributionConfig:
         Enabled: true
@@ -116,7 +121,7 @@ Resources:
             # The function URL is a proper https:// URL, but for CloudFront we
             # need to limit this to just the origin hostname. This is about the
             # best we can do with the currently available intrinsic functions.
-            DomainName: !Select [2, !Split ['/', !GetAtt FunctionUrl.FunctionUrl]]
+            DomainName: !Select [2, !Split ['/', !GetAtt OriginFunctionUrl.FunctionUrl]]
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
         DefaultCacheBehavior:

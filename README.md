@@ -30,9 +30,9 @@ us-east-1 region serving a single custom domain name through CloudFront.
 
 To prepare the deployment:
 
-1. Install and configure the AWS CLI, and ensure that it has access to ECR and
+1. Install and configure the AWS CLI, and ensure that it has access to S3 and
    CloudFormation.
-2. Create an AWS ECR repository in the us-east-1 region.
+2. Create an S3 bucket in the us-east-1 region to hold the Lambda function code.
 3. Copy `hfc.local.example.toml` to `hfc.local.toml`, and update all the values
    in the file to match your desired configuration.
 4. Run `./hfc build-deploy [stack]` to start deploying your first stack, **but

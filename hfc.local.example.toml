@@ -1,6 +1,7 @@
-# Create an ECR repository in us-east-1 and set its name here.
-[repository]
-name = "importbounce"
+# Create an S3 bucket in us-east-1 to hold the Lambda function code, and set
+# its name here.
+[bucket]
+name = "..."
 
 # Define the names and parameters of any CloudFormation stacks you want to
 # deploy from the template. It's recommended that you set up at least one test
