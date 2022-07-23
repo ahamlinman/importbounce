@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
-	"text/template"
 
 	"github.com/BurntSushi/toml"
 )
