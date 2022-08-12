@@ -1,6 +1,11 @@
 [project]
 name = "importbounce"
 
+[aws]
+# Because this stack manages an ACM certificate for a CloudFront distribution,
+# it can only be deployed in us-east-1.
+region = "us-east-1"
+
 [build]
 path = "./cmd/importbounce"
 
