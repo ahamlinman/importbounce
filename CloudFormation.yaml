@@ -18,13 +18,13 @@ Parameters:
     Type: String
     Default: 'true'
     Description: >-
-      If 'true', request the TOML config file from S3 without HTTPS. This speeds
-      up Lambda cold starts and enables container images that omit TLS roots,
-      like the image built by the standard importbounce deployment script.
-      Mitigating factors for the reduced security include the fact that the S3
-      request should not leave AWS internal networks when importbounce runs in
-      AWS Lambda, and that the Go checksum database is likely to detect
-      temporary spoofing of the config to point at modified code.
+      If 'true', request the TOML config file from S3 without HTTPS. This
+      speeds up Lambda cold starts, as the handler does not need to parse the
+      system's X.509 CAs. Mitigating factors for the reduced security include
+      the fact that the S3 request should not leave AWS internal networks when
+      importbounce runs in AWS Lambda, and that the Go checksum database is
+      likely to detect temporary spoofing of the config to point at modified
+      code.
   CodeS3Bucket:
     Description: The S3 bucket containing the Lambda deployment package.
     Type: String
