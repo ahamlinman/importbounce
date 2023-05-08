@@ -5,6 +5,7 @@ default_redirect = "https://example.com"
 
 # Every package you want importbounce to handle should be configured like the
 # examples below.
+
 [[packages]]
 # The import path prefix. This must match a full segment of the requested
 # import path for this config to apply. For example, this config would not
@@ -15,13 +16,13 @@ prefix = "example.com/gitpackage"
 # as described at https://golang.org/cmd/go/#hdr-Remote_import_paths.
 import = "git https://git.example.com/example/gitpackage"
 
-# The site to which web visitors should be redirected. This can be a godoc.org
+# The site to which web visitors should be redirected. This can be a pkg.go.dev
 # link, a GitHub link, a link to your website, etc.
-redirect = "https://godoc.org/git.example.com/example/gitpackage"
+redirect = "https://pkg.go.dev/git.example.com/example/gitpackage"
 
 # Multiple package configs are supported. The first config in the file whose
 # prefix matches the requested import path is used.
 [[packages]]
 prefix = "example.com/mymodule"
 import = "mod https://gomodules.example.com"
-redirect = "https://example.com/projects/mymodule/index.html"
+redirect = "https://example.com/projects/mymodule/"
