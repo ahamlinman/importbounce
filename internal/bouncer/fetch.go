@@ -17,18 +17,11 @@ import (
 	xrayawsv2 "github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 )
 
-// FetchConfigFunc is a type for functions that can load TOML configuration
-// files for a Bouncer.
-type FetchConfigFunc func(context.Context) (io.ReadCloser, error)
+// fetcherFunc is a type for functions that can load TOML configuration files
+// for a Bouncer.
+type fetcherFunc func(context.Context) (io.ReadCloser, error)
 
-// FetchConfigFuncFromURL returns a FetchConfigFunc based on the value of the
-// provided URL string. The following schemes are supported:
-//
-//	http://{path...}           Retrieve via HTTP request
-//	https://{path...}          Retrieve via HTTPS request
-//	file://{path...}           Retrieve from the local filesystem
-//	s3://{bucket}/{path...}    Retrieve from Amazon S3
-func FetchConfigFuncFromURL(configURL string) (FetchConfigFunc, error) {
+func getFetcherFromURL(configURL string) (fetcherFunc, error) {
 	if configURL == "" {
 		return nil, errors.New("config URL not provided")
 	}
@@ -45,7 +38,7 @@ func FetchConfigFuncFromURL(configURL string) (FetchConfigFunc, error) {
 	return factory(u), nil
 }
 
-var fetcherFactories = map[string]func(*url.URL) FetchConfigFunc{
+var fetcherFactories = map[string]func(*url.URL) fetcherFunc{
 	"http":     getHTTPConfigFetcher,
 	"https":    getHTTPConfigFetcher,
 	"file":     getFileConfigFetcher,
@@ -53,7 +46,7 @@ var fetcherFactories = map[string]func(*url.URL) FetchConfigFunc{
 	"s3+nossl": getS3ConfigFetcher,
 }
 
-func getHTTPConfigFetcher(u *url.URL) FetchConfigFunc {
+func getHTTPConfigFetcher(u *url.URL) fetcherFunc {
 	return func(ctx context.Context) (io.ReadCloser, error) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 		if err != nil {
@@ -69,7 +62,7 @@ func getHTTPConfigFetcher(u *url.URL) FetchConfigFunc {
 	}
 }
 
-func getFileConfigFetcher(u *url.URL) FetchConfigFunc {
+func getFileConfigFetcher(u *url.URL) fetcherFunc {
 	return func(_ context.Context) (io.ReadCloser, error) {
 		path := filepath.Join(u.Host, u.Path)
 		f, err := os.Open(path)
@@ -80,7 +73,7 @@ func getFileConfigFetcher(u *url.URL) FetchConfigFunc {
 	}
 }
 
-func getS3ConfigFetcher(u *url.URL) FetchConfigFunc {
+func getS3ConfigFetcher(u *url.URL) fetcherFunc {
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(u.Host),
 		Key:    aws.String(strings.TrimPrefix(u.Path, "/")),

@@ -14,7 +14,7 @@ import (
 // file, finding a matching package prefix, and serving an appropriate
 // redirect.
 type Bouncer struct {
-	FetchConfig FetchConfigFunc
+	fetchConfig fetcherFunc
 }
 
 // New creates a new Bouncer using the configuration from the provided URL.
@@ -26,13 +26,15 @@ type Bouncer struct {
 //	s3://{bucket}/{path...}         Retrieve from Amazon S3 with HTTPS
 //	s3+nossl://{bucket}/{path...}   Retrieve from Amazon S3 with HTTP
 func New(configURL string) (*Bouncer, error) {
-	fetchConfig, err := FetchConfigFuncFromURL(configURL)
+	fetchConfig, err := getFetcherFromURL(configURL)
 	if err != nil {
 		return nil, err
 	}
-	return &Bouncer{FetchConfig: fetchConfig}, nil
+	return &Bouncer{fetchConfig: fetchConfig}, nil
 }
 
+// ServeHTTP fetches a fresh copy of the Bouncer configuration and serves the
+// appropriate redirect to an HTTP client.
 func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	config, err := b.loadConfig(r.Context())
 	if err != nil {
@@ -54,7 +56,8 @@ func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := responseTmpl.Execute(w, pkgConf); err != nil {
+	err = responseTmpl.Execute(w, pkgConf)
+	if err != nil {
 		// This is going to be best-effort.
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -69,7 +72,7 @@ var responseTmpl = template.Must(template.New("").Parse(`<html>
 </html>`))
 
 func (b *Bouncer) loadConfig(ctx context.Context) (config, error) {
-	r, err := b.FetchConfig(ctx)
+	r, err := b.fetchConfig(ctx)
 	if err != nil {
 		return config{}, fmt.Errorf("fetching config: %w", err)
 	}
