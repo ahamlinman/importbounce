@@ -24,10 +24,10 @@ type FetchConfigFunc func(context.Context) (io.ReadCloser, error)
 // FetchConfigFuncFromURL returns a FetchConfigFunc based on the value of the
 // provided URL string. The following schemes are supported:
 //
-//   http://{path...}           Retrieve via HTTP request
-//   https://{path...}          Retrieve via HTTPS request
-//   file://{path...}           Retrieve from the local filesystem
-//   s3://{bucket}/{path...}    Retrieve from Amazon S3
+//	http://{path...}           Retrieve via HTTP request
+//	https://{path...}          Retrieve via HTTPS request
+//	file://{path...}           Retrieve from the local filesystem
+//	s3://{bucket}/{path...}    Retrieve from Amazon S3
 func FetchConfigFuncFromURL(urlString string) (FetchConfigFunc, error) {
 	if urlString == "" {
 		return nil, errors.New("config URL not provided")

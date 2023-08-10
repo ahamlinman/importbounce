@@ -16,7 +16,6 @@ type packageConfig struct {
 func (c *config) FindPackage(path string) packageConfig {
 	for _, pkgConf := range c.Packages {
 		prefix := strings.TrimSuffix(pkgConf.Prefix, "/")
-
 		if !strings.HasPrefix(path, prefix) {
 			continue
 		}

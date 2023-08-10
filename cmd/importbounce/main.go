@@ -11,35 +11,32 @@ import (
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 )
 
-func main() {
+var envConfigURL = os.Getenv("IMPORTBOUNCE_CONFIG_URL")
+
+var (
+	flagHTTPAddr  = flag.String("http", "", "Serve HTTP on the provided address instead of AWS Lambda")
+	flagConfigURL = flag.String("config", envConfigURL, "Location of the config file to read on each request")
+)
+
+func init() {
 	http.DefaultClient.Timeout = 2500 * time.Millisecond
+}
 
-	var (
-		httpAddr = flag.String(
-			"http", "", "Serve HTTP on the provided address instead of AWS Lambda",
-		)
-
-		defaultConfigURL = os.Getenv("IMPORTBOUNCE_CONFIG_URL")
-		configURL        = flag.String(
-			"config", defaultConfigURL, "Location of the config file to read on each request",
-		)
-	)
-
+func main() {
 	flag.Parse()
 
-	fetchConfig, err := FetchConfigFuncFromURL(*configURL)
+	fetchConfig, err := FetchConfigFuncFromURL(*flagConfigURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	bouncer := &Bouncer{FetchConfig: fetchConfig}
 
-	if *httpAddr != "" {
-		log.Printf("starting HTTP server on %s", *httpAddr)
-		http.ListenAndServe(*httpAddr, bouncer)
-		return
+	if *flagHTTPAddr != "" {
+		log.Printf("starting HTTP server on %s", *flagHTTPAddr)
+		http.ListenAndServe(*flagHTTPAddr, bouncer)
+	} else {
+		log.Printf("starting AWS Lambda listener")
+		lambda.Start(httpadapter.NewV2(bouncer).ProxyWithContext)
 	}
-
-	log.Printf("starting AWS Lambda listener")
-	lambda.Start(httpadapter.NewV2(bouncer).ProxyWithContext)
 }
