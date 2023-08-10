@@ -27,12 +27,10 @@ func init() {
 func main() {
 	flag.Parse()
 
-	fetchConfig, err := bouncer.FetchConfigFuncFromURL(*flagConfigURL)
+	bouncer, err := bouncer.New(*flagConfigURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	bouncer := &bouncer.Bouncer{FetchConfig: fetchConfig}
 
 	if *flagHTTPAddr != "" {
 		log.Printf("starting HTTP server on %s", *flagHTTPAddr)

@@ -28,21 +28,21 @@ type FetchConfigFunc func(context.Context) (io.ReadCloser, error)
 //	https://{path...}          Retrieve via HTTPS request
 //	file://{path...}           Retrieve from the local filesystem
 //	s3://{bucket}/{path...}    Retrieve from Amazon S3
-func FetchConfigFuncFromURL(urlString string) (FetchConfigFunc, error) {
-	if urlString == "" {
+func FetchConfigFuncFromURL(configURL string) (FetchConfigFunc, error) {
+	if configURL == "" {
 		return nil, errors.New("config URL not provided")
 	}
 
-	u, err := url.Parse(urlString)
+	u, err := url.Parse(configURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid config URL %q: %w", urlString, err)
+		return nil, fmt.Errorf("invalid config URL %q: %w", configURL, err)
 	}
 
-	if factory, ok := fetcherFactories[u.Scheme]; ok {
-		return factory(u), nil
+	factory, ok := fetcherFactories[u.Scheme]
+	if !ok {
+		return nil, fmt.Errorf("unknown config URL scheme %q", u.Scheme)
 	}
-
-	return nil, fmt.Errorf("unknown config URL scheme %q", u.Scheme)
+	return factory(u), nil
 }
 
 var fetcherFactories = map[string]func(*url.URL) FetchConfigFunc{

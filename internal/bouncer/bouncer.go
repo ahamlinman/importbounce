@@ -17,13 +17,21 @@ type Bouncer struct {
 	FetchConfig FetchConfigFunc
 }
 
-var responseTmpl = template.Must(template.New("").Parse(`<html>
-<head>
-<meta name="go-import" content="{{.Prefix}} {{.Import}}">
-<meta http-equiv="refresh" content="0; url={{.Redirect}}">
-</head>
-<body>Redirecting…</body>
-</html>`))
+// New creates a new Bouncer using the configuration from the provided URL.
+// The following URL schemes are supported:
+//
+//	https://{path...}               Retrieve via HTTPS request
+//	http://{path...}                Retrieve via HTTP request
+//	file://{path...}                Retrieve from the local filesystem
+//	s3://{bucket}/{path...}         Retrieve from Amazon S3 with HTTPS
+//	s3+nossl://{bucket}/{path...}   Retrieve from Amazon S3 with HTTP
+func New(configURL string) (*Bouncer, error) {
+	fetchConfig, err := FetchConfigFuncFromURL(configURL)
+	if err != nil {
+		return nil, err
+	}
+	return &Bouncer{FetchConfig: fetchConfig}, nil
+}
 
 func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	config, err := b.loadConfig(r.Context())
@@ -51,6 +59,14 @@ func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
+
+var responseTmpl = template.Must(template.New("").Parse(`<html>
+<head>
+<meta name="go-import" content="{{.Prefix}} {{.Import}}">
+<meta http-equiv="refresh" content="0; url={{.Redirect}}">
+</head>
+<body>Redirecting…</body>
+</html>`))
 
 func (b *Bouncer) loadConfig(ctx context.Context) (config, error) {
 	r, err := b.FetchConfig(ctx)
