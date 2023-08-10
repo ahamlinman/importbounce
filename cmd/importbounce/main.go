@@ -9,6 +9,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
+
+	"go.alexhamlin.co/importbounce/internal/bouncer"
 )
 
 var envConfigURL = os.Getenv("IMPORTBOUNCE_CONFIG_URL")
@@ -25,12 +27,12 @@ func init() {
 func main() {
 	flag.Parse()
 
-	fetchConfig, err := FetchConfigFuncFromURL(*flagConfigURL)
+	fetchConfig, err := bouncer.FetchConfigFuncFromURL(*flagConfigURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bouncer := &Bouncer{FetchConfig: fetchConfig}
+	bouncer := &bouncer.Bouncer{FetchConfig: fetchConfig}
 
 	if *flagHTTPAddr != "" {
 		log.Printf("starting HTTP server on %s", *flagHTTPAddr)
