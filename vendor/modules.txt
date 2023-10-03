@@ -12,7 +12,7 @@ github.com/aws/aws-lambda-go/lambda
 github.com/aws/aws-lambda-go/lambda/handlertrace
 github.com/aws/aws-lambda-go/lambda/messages
 github.com/aws/aws-lambda-go/lambdacontext
-# github.com/aws/aws-sdk-go v1.45.7
+# github.com/aws/aws-sdk-go v1.45.20
 ## explicit; go 1.11
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/auth/bearer
@@ -85,10 +85,10 @@ github.com/aws/aws-sdk-go-v2/internal/timeconv
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream/eventstreamapi
-# github.com/aws/aws-sdk-go-v2/config v1.18.39
+# github.com/aws/aws-sdk-go-v2/config v1.18.43
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/config
-# github.com/aws/aws-sdk-go-v2/credentials v1.13.37
+# github.com/aws/aws-sdk-go-v2/credentials v1.13.41
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/credentials
 github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds
@@ -107,7 +107,7 @@ github.com/aws/aws-sdk-go-v2/internal/configsources
 # github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.35
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
-# github.com/aws/aws-sdk-go-v2/internal/ini v1.3.42
+# github.com/aws/aws-sdk-go-v2/internal/ini v1.3.43
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/internal/ini
 # github.com/aws/aws-sdk-go-v2/internal/v4a v1.1.4
@@ -129,29 +129,29 @@ github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared/arn
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared/config
-# github.com/aws/aws-sdk-go-v2/service/s3 v1.38.5
+# github.com/aws/aws-sdk-go-v2/service/s3 v1.40.0
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/s3
 github.com/aws/aws-sdk-go-v2/service/s3/internal/arn
 github.com/aws/aws-sdk-go-v2/service/s3/internal/customizations
 github.com/aws/aws-sdk-go-v2/service/s3/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/s3/types
-# github.com/aws/aws-sdk-go-v2/service/sso v1.13.6
+# github.com/aws/aws-sdk-go-v2/service/sso v1.15.0
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/sso
 github.com/aws/aws-sdk-go-v2/service/sso/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sso/types
-# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.15.6
+# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.1
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/ssooidc
 github.com/aws/aws-sdk-go-v2/service/ssooidc/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/ssooidc/types
-# github.com/aws/aws-sdk-go-v2/service/sts v1.21.5
+# github.com/aws/aws-sdk-go-v2/service/sts v1.23.0
 ## explicit; go 1.15
 github.com/aws/aws-sdk-go-v2/service/sts
 github.com/aws/aws-sdk-go-v2/service/sts/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sts/types
-# github.com/aws/aws-xray-sdk-go v1.8.1
+# github.com/aws/aws-xray-sdk-go v1.8.2
 ## explicit; go 1.19
 github.com/aws/aws-xray-sdk-go/daemoncfg
 github.com/aws/aws-xray-sdk-go/header
@@ -189,8 +189,8 @@ github.com/aws/smithy-go/time
 github.com/aws/smithy-go/transport/http
 github.com/aws/smithy-go/transport/http/internal/io
 github.com/aws/smithy-go/waiter
-# github.com/awslabs/aws-lambda-go-api-proxy v0.14.0
-## explicit; go 1.14
+# github.com/awslabs/aws-lambda-go-api-proxy v0.16.0
+## explicit; go 1.20
 github.com/awslabs/aws-lambda-go-api-proxy/core
 github.com/awslabs/aws-lambda-go-api-proxy/httpadapter
 # github.com/golang/protobuf v1.5.3
@@ -204,7 +204,7 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/jmespath/go-jmespath v0.4.0
 ## explicit; go 1.14
 github.com/jmespath/go-jmespath
-# github.com/klauspost/compress v1.16.7
+# github.com/klauspost/compress v1.17.0
 ## explicit; go 1.18
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
@@ -215,7 +215,7 @@ github.com/pkg/errors
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.49.0
+# github.com/valyala/fasthttp v1.50.0
 ## explicit; go 1.20
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttputil
@@ -237,10 +237,10 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20230911183012-2d3300fd4832
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.58.0
+# google.golang.org/grpc v1.58.2
 ## explicit; go 1.19
 google.golang.org/grpc
 google.golang.org/grpc/attributes
