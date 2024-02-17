@@ -6,6 +6,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -33,9 +35,17 @@ func New(configURL string) (*Bouncer, error) {
 	return &Bouncer{fetchConfig: fetchConfig}, nil
 }
 
+var allow = []string{http.MethodGet, http.MethodHead}
+
 // ServeHTTP fetches a fresh copy of the Bouncer configuration and serves the
 // appropriate redirect to an HTTP client.
 func (b *Bouncer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !slices.Contains(allow, r.Method) {
+		w.Header().Add("Allow", strings.Join(allow, ", "))
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
 	config, err := b.loadConfig(r.Context())
 	if err != nil {
 		log.Printf("failed to load config: %v", err)
